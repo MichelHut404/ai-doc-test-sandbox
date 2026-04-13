@@ -22,8 +22,8 @@ public class AiDocumentationService : IAiDocumentationService
         var filesSections = string.Join("\n\n", fileContents.Select(f =>
             $"=== {f.FileName} ===\n{f.Content}"));
 
-        if (!_promptBuilders.TryGetValue(documentationType, out var builder))
-            throw new ArgumentOutOfRangeException(nameof(documentationType), documentationType, null);
+        if (!_promptBuilders.TryGetValue(documentationType, out var builder) || builder is null)
+            throw new ArgumentOutOfRangeException(nameof(documentationType), documentationType, "No prompt builder registered for the specified documentation type.");
             
         var prompt = builder.Build(filesSections);
 
