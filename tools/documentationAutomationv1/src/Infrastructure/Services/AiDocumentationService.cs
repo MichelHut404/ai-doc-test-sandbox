@@ -2,6 +2,7 @@ namespace src.Infrastructure.Services;
 
 using documentationAutomationv1.Application.Interfaces;
 using src.Application.DTOs;
+using src.Infrastructure.Interfaces;
 
 public class AiDocumentationService : IAiDocumentationService
 {
@@ -21,8 +22,7 @@ public class AiDocumentationService : IAiDocumentationService
         var filesSections = string.Join("\n\n", fileContents.Select(f =>
             $"=== {f.FileName} ===\n{f.Content}"));
 
-        IPromptBuilder builder;
-        if (!_promptBuilders.TryGetValue(documentationType, out builder))
+        if (!_promptBuilders.TryGetValue(documentationType, out var builder))
             throw new ArgumentOutOfRangeException(nameof(documentationType), documentationType, null);
             
         var prompt = builder.Build(filesSections);

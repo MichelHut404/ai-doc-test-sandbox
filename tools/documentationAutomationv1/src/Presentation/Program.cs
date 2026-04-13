@@ -1,6 +1,7 @@
 ﻿using documentationAutomationv1.Application.Interfaces;
 using documentationAutomationv1.Application.Orchestrators;
 using Microsoft.Extensions.Configuration;
+using src.Infrastructure.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using src.Infrastructure;
 using src.Infrastructure.Services;
@@ -27,6 +28,7 @@ services.AddScoped<IAiDocumentationService>(sp =>
         sp.GetRequiredService<IChatClient>(),
         sp.GetServices<IPromptBuilder>()));
 services.AddScoped<ICodeAnalysisService, CodeAnalysisService>();
+services.AddScoped<ICMDProcessRunner, CMDProcessRunner>();
 services.AddScoped<IGitService, GitService>();
 services.AddScoped<IMarkdownWriterService, MarkdownWriterService>();
 services.AddScoped<CliOrchestrator>();

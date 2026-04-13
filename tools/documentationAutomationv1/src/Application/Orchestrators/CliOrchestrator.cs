@@ -16,12 +16,17 @@ public class CliOrchestrator : BaseOrchestrator
 
     public override async Task RunAsync()
     {
-        var filePaths = Directory.GetFiles("samples", "*.cs", SearchOption.AllDirectories);
-        Console.WriteLine($"Found {filePaths.Length} file(s) to document.");
+        var changedFiles = (await GitService.GetChangedFilesAsync()).ToList();
 
-        for (int i = 0; i < filePaths.Length; i++)
+        foreach (var file in changedFiles)
         {
-            var fileContents = await CodeAnalysisService.AnalyzeAsync([filePaths[i]]);
+            Console.WriteLine($"Changed file: {file}");
+        }
+
+
+        foreach (var file in changedFiles)
+        {
+            var fileContents = await CodeAnalysisService.AnalyzeAsync(new List<string> { file });            
             var content = fileContents.First().Content;
 
             var types = new List<DocumentationType> { DocumentationType.ClassDescriptionAndMethodDescription };
@@ -36,6 +41,7 @@ public class CliOrchestrator : BaseOrchestrator
                 await MarkdownWriterService.WriteAsync(doc, type);
             }
         }
+
         
         
     }

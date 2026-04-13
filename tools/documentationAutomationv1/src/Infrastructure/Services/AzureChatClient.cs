@@ -1,6 +1,6 @@
 using System.ClientModel;
 using Azure.AI.OpenAI;
-using documentationAutomationv1.Application.Interfaces;
+using src.Infrastructure.Interfaces;
 
 namespace src.Infrastructure.Services;
 

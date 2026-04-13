@@ -1,6 +1,7 @@
 using documentationAutomationv1.Application.Interfaces;
 using Moq;
 using src.Application.DTOs;
+using src.Infrastructure.Interfaces;
 using src.Infrastructure.Services;
 
 namespace documentationAutomationv1.Infrastructure.Tests.Services;
