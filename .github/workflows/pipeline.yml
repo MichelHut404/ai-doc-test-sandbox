@@ -26,7 +26,8 @@ jobs:
             AzureOpenAI__ApiKey: ${{ secrets.AZURE_OPENAI_APIKEY }}
             
           run: |
-            dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj
+            # dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj
+            echo "Tool placeholder - documentatie tool wordt hier aangeroepen"
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             
