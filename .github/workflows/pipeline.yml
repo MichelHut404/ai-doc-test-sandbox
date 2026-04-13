@@ -26,7 +26,7 @@ jobs:
           env:
             AzureOpenAI__DeploymentName: ${{ secrets.AZURE_OPENAI_DEPLOYMENTNAME }}
             AzureOpenAI__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-            AzureOpenAI__ApiKey: ${{ secrets.AZURE_OPENAI_APIKEY }}
+            AzureOpenAI__ApiKey: ${{ secrets.OPENAI_APIKEY }}
             
           run: |
             dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj
