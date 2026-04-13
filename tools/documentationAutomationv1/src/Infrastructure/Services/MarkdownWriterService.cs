@@ -1,5 +1,3 @@
-using documentationAutomationv1.Application.Interfaces;
-using src.Application.DTOs;
 
 namespace src.Infrastructure;
 
@@ -9,7 +7,7 @@ public class MarkdownWriterService : IMarkdownWriterService
 
     public MarkdownWriterService(string? basePath = null)
     {
-        _basePath = basePath ?? "../Application/Documentation";
+        _basePath = basePath ?? "docs/generated";
     }
 
     public async Task WriteAsync(string content, DocumentationType documentationType)
