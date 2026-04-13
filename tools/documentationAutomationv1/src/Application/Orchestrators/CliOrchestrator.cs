@@ -16,13 +16,14 @@ public class CliOrchestrator : BaseOrchestrator
 
     public override async Task RunAsync()
     {
-        var changedFiles = (await GitService.GetChangedFilesAsync()).ToList();
+        var changedFiles = (await GitService.GetChangedFilesAsync())
+            .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
         foreach (var file in changedFiles)
         {
             Console.WriteLine($"Changed file: {file}");
         }
-
 
         foreach (var file in changedFiles)
         {

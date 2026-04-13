@@ -27,7 +27,7 @@ jobs:
             AzureOpenAI__DeploymentName: ${{ secrets.AZURE_OPENAI_DEPLOYMENTNAME }}
             AzureOpenAI__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
             AzureOpenAI__ApiKey: ${{ secrets.OPENAI_APIKEY }}
-            
+            Documentation__BasePath: docs/generated    
           run: |
             dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj
             git config user.name "github-actions[bot]"
