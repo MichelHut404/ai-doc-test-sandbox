@@ -1,0 +1,37 @@
+name: Generate AI Documentation
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    permissions:
+        contents: write
+
+    steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: '10.0.x'
+    
+        - name: Run AI Doc Tool
+          env:
+            AzureOpenAI__DeploymentName: ${{ secrets.AZURE_OPENAI_DEPLOYMENTNAME }}
+            AzureOpenAI__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+            AzureOpenAI__ApiKey: ${{ secrets.AZURE_OPENAI_APIKEY }}
+            
+          run: |
+            dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            
+            CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
+            git checkout -B "docs-$CURRENT_BRANCH"
+            git add .
+            git commit -m "docs: AI generated documentation for $CURRENT_BRANCH" || echo "Geen wijzigingen"
+            git push origin "docs-$CURRENT_BRANCH" --force
