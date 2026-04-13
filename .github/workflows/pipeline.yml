@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - '**'
+  pull_request:
+    types:
+      - closed
 
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
     permissions:
         contents: write
+        pull-requests: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  
 
@@ -36,7 +40,37 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             
             CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
-            git checkout -B "docs-$CURRENT_BRANCH"
+            DOCS_BRANCH="docs-$CURRENT_BRANCH"
+            
+            git checkout -B "$DOCS_BRANCH"
             git add .
-            git commit -m "docs: AI generated documentation for $CURRENT_BRANCH" || echo "Geen wijzigingen"
-            git push origin "docs-$CURRENT_BRANCH" --force
+            
+            if git commit -m "docs: AI generated documentation for $CURRENT_BRANCH"; then
+              git push origin "$DOCS_BRANCH" --force
+              
+              # Maak PR aan als die nog niet bestaat
+              gh pr create \
+                --title "docs: AI generated documentation for $CURRENT_BRANCH" \
+                --body "Automatisch gegenereerde documentatie voor branch \`$CURRENT_BRANCH\`." \
+                --base "$CURRENT_BRANCH" \
+                --head "$DOCS_BRANCH" \
+                || echo "PR bestaat al"
+            else
+              echo "Geen wijzigingen, geen PR aangemaakt"
+            fi
+
+  delete-docs-branch:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'docs-')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Delete docs branch
+        run: |
+          gh api repos/${{ github.repository }}/git/refs/heads/${{ github.event.pull_request.head.ref }} \
+            --method DELETE
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
