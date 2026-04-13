@@ -15,7 +15,17 @@ public class GitService : IGitService
     public async Task<IEnumerable<string>> GetChangedFilesAsync()
     {
         var repoRoot = (await _processRunner.RunAsync("git", "rev-parse --show-toplevel")).Trim();
-        var output = await _processRunner.RunAsync("git", "diff --name-only HEAD~1 HEAD");
+
+        // Check if HEAD~1 exists (fails on shallow clones or first commit)
+        var parentCheck = await _processRunner.RunAsync("git", "rev-parse --verify HEAD~1");
+        var diffArgs = string.IsNullOrWhiteSpace(parentCheck)
+            ? "diff --name-only --cached HEAD"  // fallback: staged files on first commit
+            : "diff --name-only HEAD~1 HEAD";
+
+        var output = await _processRunner.RunAsync("git", diffArgs);
+        
+        Console.WriteLine($"Git output:\n{output}"); 
+
         return output
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(f => Path.Combine(repoRoot, f.Trim().Replace('/', Path.DirectorySeparatorChar)));
