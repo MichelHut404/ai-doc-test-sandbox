@@ -16,6 +16,8 @@ public class CliOrchestrator : BaseOrchestrator
 
     public override async Task RunAsync()
     {
+        await GitService.CreateShadowDocBranchAsync();
+
         var changedFiles = (await GitService.GetChangedFilesAsync())
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
             .ToList();

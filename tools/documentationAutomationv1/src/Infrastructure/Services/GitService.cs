@@ -5,9 +5,9 @@ namespace src.Infrastructure;
 
 public class GitService : IGitService
 {
-    private readonly ICMDProcessRunner _processRunner;
+    private readonly IProcessRunner _processRunner;
 
-    public GitService(ICMDProcessRunner processRunner)
+    public GitService(IProcessRunner processRunner)
     {
         _processRunner = processRunner;
     }
@@ -16,19 +16,29 @@ public class GitService : IGitService
     {
         var repoRoot = (await _processRunner.RunAsync("git", "rev-parse --show-toplevel")).Trim();
 
-        // Check if HEAD~1 exists (fails on shallow clones or first commit)
         var parentCheck = await _processRunner.RunAsync("git", "rev-parse --verify HEAD~1");
         var diffArgs = string.IsNullOrWhiteSpace(parentCheck)
-            ? "diff --name-only --cached HEAD"  // fallback: staged files on first commit
+            ? "diff --name-only --cached HEAD"  
             : "diff --name-only HEAD~1 HEAD";
 
         var output = await _processRunner.RunAsync("git", diffArgs);
-        
-        Console.WriteLine($"Git output:\n{output}"); 
-
         return output
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(f => Path.Combine(repoRoot, f.Trim().Replace('/', Path.DirectorySeparatorChar)));
+    }
+
+    public async Task<string> CreateShadowDocBranchAsync()
+    {
+        var currentBranch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
+        var shadowBranch = $"docs/{currentBranch}";
+
+        var branchExists = await _processRunner.RunAsync("git", $"rev-parse --verify {shadowBranch}");
+        if (string.IsNullOrWhiteSpace(branchExists))
+            await _processRunner.RunAsync("git", $"checkout -b {shadowBranch}");
+        else
+            await _processRunner.RunAsync("git", $"checkout {shadowBranch}");
+
+        return shadowBranch;
     }
 
 }
