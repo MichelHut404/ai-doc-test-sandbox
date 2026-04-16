@@ -18,8 +18,12 @@ public class CliOrchestrator : BaseOrchestrator
     {
         await GitService.CreateShadowDocBranchAsync();
 
+        // tijdelijk
+        var toolRoot = FindToolRoot();
+
         var changedFiles = (await GitService.GetChangedFilesAsync())
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+            .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         foreach (var file in changedFiles)
@@ -45,9 +49,21 @@ public class CliOrchestrator : BaseOrchestrator
             }
         }
 
-        
-        
+        await GitService.CommitAndPushAsync("docs: auto-generated documentation for changed files: " + string.Join(", ", changedFiles.Select(Path.GetFileName)));
+
     }
 
+    //alleen tijdelijk
 
+    private static string? FindToolRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            if (dir.GetFiles("*.sln").Length > 0)
+                return dir.FullName + Path.DirectorySeparatorChar;
+            dir = dir.Parent;
+        }
+        return null;
+    }
 }

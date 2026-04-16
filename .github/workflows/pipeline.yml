@@ -4,73 +4,32 @@ on:
   push:
     branches:
       - '**'
-  pull_request:
-    types:
-      - closed
 
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
     permissions:
-        contents: write
-        pull-requests: write
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  
-
-
-    steps:
-        - uses: actions/checkout@v4
-          with:
-            fetch-depth: 2
-
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v4
-          with:
-            dotnet-version: '10.0.x'
-    
-        - name: Run AI Doc Tool
-          env:
-            AzureOpenAI__DeploymentName: ${{ secrets.AZURE_OPENAI_DEPLOYMENTNAME }}
-            AzureOpenAI__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-            AzureOpenAI__ApiKey: ${{ secrets.OPENAI_APIKEY }}
-            Documentation__BasePath: docs/generated    
-          run: |
-            dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            
-            CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
-            DOCS_BRANCH="docs-$CURRENT_BRANCH"
-            
-            git checkout -B "$DOCS_BRANCH"
-            git add .
-            
-            if git commit -m "docs: AI generated documentation for $CURRENT_BRANCH"; then
-              git push origin "$DOCS_BRANCH" --force
-              
-              # Maak PR aan als die nog niet bestaat
-              gh pr create \
-                --title "docs: AI generated documentation for $CURRENT_BRANCH" \
-                --body "Automatisch gegenereerde documentatie voor branch \`$CURRENT_BRANCH\`." \
-                --base "$CURRENT_BRANCH" \
-                --head "$DOCS_BRANCH" \
-                || echo "PR bestaat al"
-            else
-              echo "Geen wijzigingen, geen PR aangemaakt"
-            fi
-
-  delete-docs-branch:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'docs-')
-    runs-on: ubuntu-latest
-    permissions:
       contents: write
+      pull-requests: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Delete docs branch
-        run: |
-          gh api repos/${{ github.repository }}/git/refs/heads/${{ github.event.pull_request.head.ref }} \
-            --method DELETE
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run AI Doc Tool
         env:
+          AzureOpenAI__DeploymentName: ${{ secrets.AZURE_OPENAI_DEPLOYMENTNAME }}
+          AzureOpenAI__Endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AzureOpenAI__ApiKey: ${{ secrets.OPENAI_APIKEY }}
+          Documentation__BasePath: docs/generated
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet run --project tools/documentationAutomationv1/src/Presentation/documentationAutomationv1.Presentation.csproj

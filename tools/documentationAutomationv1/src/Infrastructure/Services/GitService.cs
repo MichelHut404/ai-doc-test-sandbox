@@ -41,4 +41,13 @@ public class GitService : IGitService
         return shadowBranch;
     }
 
+    public async Task CommitAndPushAsync(string message)
+    {
+        await _processRunner.RunAsync("git", "add -A");
+        await _processRunner.RunAsync("git", $"commit -m \"{message}\"");
+
+        var branch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
+        await _processRunner.RunAsync("git", $"push --set-upstream origin {branch}");
+    }
+
 }
