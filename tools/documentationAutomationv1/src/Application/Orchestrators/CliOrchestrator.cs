@@ -24,6 +24,7 @@ public class CliOrchestrator : BaseOrchestrator
         var changedFiles = (await GitService.GetChangedFilesAsync())
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
             .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
+            .Where(f => File.Exists(f))
             .ToList();
 
         foreach (var file in changedFiles)

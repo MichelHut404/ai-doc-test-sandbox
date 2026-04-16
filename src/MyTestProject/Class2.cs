@@ -18,4 +18,6 @@ public class Class2
         Console.WriteLine($"This method takes parameters: {param1} and {param2}");
     }
 
+
+
 }
