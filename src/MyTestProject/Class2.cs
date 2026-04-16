@@ -18,6 +18,10 @@ public class Class2
         Console.WriteLine($"This method takes parameters: {param1} and {param2}");
     }
 
+    public void methodWithHttpAttribute()
+    {
+        Console.WriteLine("This method simulates an API endpoint with an HTTP attribute.");
+    }
 
 
 }
