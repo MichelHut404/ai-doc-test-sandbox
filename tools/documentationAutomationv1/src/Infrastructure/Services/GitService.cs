@@ -50,4 +50,12 @@ public class GitService : IGitService
         await _processRunner.RunAsync("git", $"push --set-upstream origin {branch}");
     }
 
+    public async Task CreatePullRequestAsync(string docBranch, string targetBranch, string title)
+    {
+        var body = "Auto-generated documentation via tool.";
+        await _processRunner.RunAsync(
+            "gh",
+            $"pr create --base \"{targetBranch}\" --head \"{docBranch}\" --title \"{title}\" --body \"{body}\"");
+    }
+
 }

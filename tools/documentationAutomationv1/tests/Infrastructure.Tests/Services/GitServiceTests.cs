@@ -257,4 +257,134 @@ public async Task CreateShadowDocBranchAsync_WhenBranchVerifyIsWhitespace_Create
 
     _mockRunner.Verify(r => r.RunAsync("git", "checkout -b docs/main"), Times.Once);
 }
+
+    // ── CommitAndPushAsync ─────────────────────────────────────────────────────
+
+    // Verifieert dat 'git add -A' wordt aangeroepen om alle wijzigingen te stagen.
+    // '-A' staat voor '--all': het staged nieuwe, gewijzigde én verwijderde bestanden in de hele repo.
+    // Dit is de eerste stap vóór de commit.
+    [Fact]
+    public async Task CommitAndPushAsync_StagesAllChanges_RunsGitAddA()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
+        _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin main")).ReturnsAsync(string.Empty);
+
+        await _sut.CommitAndPushAsync("docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("git", "add -A"), Times.Once);
+    }
+
+    // Verifieert dat 'git commit -m "<message>"' wordt aangeroepen met het opgegeven bericht.
+    // Het commit-bericht wordt tussen aanhalingstekens geplaatst zodat spaties correct worden doorgegeven.
+    [Fact]
+    public async Task CommitAndPushAsync_CommitsWithGivenMessage_RunsGitCommit()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
+        _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin main")).ReturnsAsync(string.Empty);
+
+        await _sut.CommitAndPushAsync("docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("git", "commit -m \"docs: update\""), Times.Once);
+    }
+
+    // Verifieert dat 'git push --set-upstream origin <branch>' wordt aangeroepen met de juiste branchnaam.
+    // '--set-upstream' (of '-u') koppelt de lokale branch aan de remote tracking branch,
+    // zodat toekomstige 'git push' en 'git pull' zonder extra argumenten werken.
+    [Fact]
+    public async Task CommitAndPushAsync_PushesWithSetUpstreamToOrigin_RunsGitPush()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("feature/login\n");
+        _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin feature/login")).ReturnsAsync(string.Empty);
+
+        await _sut.CommitAndPushAsync("docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("git", "push --set-upstream origin feature/login"), Times.Once);
+    }
+
+    // Verifieert dat de branchnaam wordt getrimd vóór gebruik in de push-opdracht.
+    // 'git rev-parse --abbrev-ref HEAD' geeft vaak een trailing newline of spaties terug.
+    // Zonder .Trim() zou de push-opdracht 'push --set-upstream origin main\n' worden,
+    // wat een ongeldige remote-branchnaam oplevert.
+    [Fact]
+    public async Task CommitAndPushAsync_BranchNameIsTrimmed_PushUsesCleanBranchName()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("  main  \n");
+        _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin main")).ReturnsAsync(string.Empty);
+
+        await _sut.CommitAndPushAsync("docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("git", "push --set-upstream origin main"), Times.Once);
+    }
+
+    // ── CreatePullRequestAsync ─────────────────────────────────────────────────
+
+    // Verifieert dat 'gh pr create' wordt aangeroepen met de juiste --base, --head, --title en --body argumenten.
+    // 'gh pr create' is het GitHub CLI-commando om een pull request aan te maken.
+    // '--base' is de doelbranch (de feature branch), '--head' is de bronbranch (de docs shadow branch).
+    [Fact]
+    public async Task CreatePullRequestAsync_CallsGhPrCreateWithCorrectArguments()
+    {
+        var expectedArgs = "pr create --base \"feature/login\" --head \"docs/feature/login\" --title \"docs: auto-generated documentation\" --body \"Auto-generated documentation via tool.\"";
+        _mockRunner.Setup(r => r.RunAsync("gh", expectedArgs)).ReturnsAsync(string.Empty);
+
+        await _sut.CreatePullRequestAsync("docs/feature/login", "feature/login", "docs: auto-generated documentation");
+
+        _mockRunner.Verify(r => r.RunAsync("gh", expectedArgs), Times.Once);
+    }
+
+    // Verifieert dat de --base parameter de targetBranch bevat.
+    // De targetBranch is de originele feature branch waar de PR naar toe gemerged wordt.
+    [Fact]
+    public async Task CreatePullRequestAsync_UsesTargetBranchAsBase()
+    {
+        _mockRunner.Setup(r => r.RunAsync("gh", It.IsAny<string>())).ReturnsAsync(string.Empty);
+
+        await _sut.CreatePullRequestAsync("docs/main", "main", "docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("gh", It.Is<string>(args => args.Contains("--base \"main\""))), Times.Once);
+    }
+
+    // Verifieert dat de --head parameter de docBranch bevat.
+    // De docBranch is de shadow branch met de gegenereerde documentatie (bv. 'docs/feature/login').
+    [Fact]
+    public async Task CreatePullRequestAsync_UsesDocBranchAsHead()
+    {
+        _mockRunner.Setup(r => r.RunAsync("gh", It.IsAny<string>())).ReturnsAsync(string.Empty);
+
+        await _sut.CreatePullRequestAsync("docs/feature/login", "feature/login", "docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("gh", It.Is<string>(args => args.Contains("--head \"docs/feature/login\""))), Times.Once);
+    }
+
+    // Verifieert dat de --title parameter de opgegeven titel bevat.
+    // De titel wordt tussen aanhalingstekens geplaatst zodat spaties correct worden doorgegeven aan de CLI.
+    [Fact]
+    public async Task CreatePullRequestAsync_UsesTitleInPrCommand()
+    {
+        _mockRunner.Setup(r => r.RunAsync("gh", It.IsAny<string>())).ReturnsAsync(string.Empty);
+
+        await _sut.CreatePullRequestAsync("docs/main", "main", "docs: mijn pr titel");
+
+        _mockRunner.Verify(r => r.RunAsync("gh", It.Is<string>(args => args.Contains("--title \"docs: mijn pr titel\""))), Times.Once);
+    }
+
+    // Verifieert dat de --body parameter de vaste auto-generated omschrijving bevat.
+    // De body is een statische tekst die aangeeft dat de documentatie automatisch is gegenereerd.
+    [Fact]
+    public async Task CreatePullRequestAsync_IncludesAutoGeneratedBody()
+    {
+        _mockRunner.Setup(r => r.RunAsync("gh", It.IsAny<string>())).ReturnsAsync(string.Empty);
+
+        await _sut.CreatePullRequestAsync("docs/main", "main", "docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("gh", It.Is<string>(args => args.Contains("--body \"Auto-generated documentation via tool.\""))), Times.Once);
+    }
 }

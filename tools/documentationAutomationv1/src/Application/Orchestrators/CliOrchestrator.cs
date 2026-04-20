@@ -16,7 +16,8 @@ public class CliOrchestrator : BaseOrchestrator
 
     public override async Task RunAsync()
     {
-        await GitService.CreateShadowDocBranchAsync();
+        var docBranch = await GitService.CreateShadowDocBranchAsync();
+        var targetBranch = docBranch.StartsWith("docs/") ? docBranch["docs/".Length..] : docBranch;
 
         // tijdelijk
         var toolRoot = FindToolRoot();
@@ -32,29 +33,36 @@ public class CliOrchestrator : BaseOrchestrator
             Console.WriteLine($"Changed file: {file}");
         }
 
-        foreach (var file in changedFiles)
+        var allFileContents = await CodeAnalysisService.AnalyzeAsync(changedFiles);
+
+        foreach (var fileContent in allFileContents)
         {
-            var fileContents = await CodeAnalysisService.AnalyzeAsync(new List<string> { file });            
-            var content = fileContents.First().Content;
-
-            var types = new List<DocumentationType> { DocumentationType.ClassDescriptionAndMethodDescription };
-            if (content.Contains("[HttpGet]") || content.Contains("[HttpPost]"))
-                types.Add(DocumentationType.ApiFlow);
-            if (content.Contains(": I") || content.Contains("interface"))
-                types.Add(DocumentationType.Relationship);
-
-            foreach (var type in types)
+            foreach (var type in DetermineDocumentationTypes(fileContent.Content))
             {
-                var doc = await AiDocumentationService.GenerateDocumentationAsync(fileContents, type);
+                var doc = await AiDocumentationService.GenerateDocumentationAsync(new[] { fileContent }, type);
                 await MarkdownWriterService.WriteAsync(doc, type);
             }
         }
 
         await GitService.CommitAndPushAsync("docs: auto-generated documentation for changed files: " + string.Join(", ", changedFiles.Select(Path.GetFileName)));
 
+        var prTitle = $"docs: auto-generated documentation for {targetBranch}";
+        await GitService.CreatePullRequestAsync(docBranch, targetBranch, prTitle);
+
+    }
+    // voeg hier nieuwe DocumentationTypes toe als dat nodig is.
+    private static IEnumerable<DocumentationType> DetermineDocumentationTypes(string content)
+    {
+        yield return DocumentationType.ClassDescriptionAndMethodDescription;
+
+        if (content.Contains("[HttpGet]") || content.Contains("[HttpPost]"))
+            yield return DocumentationType.ApiFlow;
+
+        if (content.Contains(": I") || content.Contains("interface"))
+            yield return DocumentationType.Relationship;
     }
 
-    //alleen tijdelijk
+    //alleen tijdelijk totdat ik van de tool een package maak
 
     private static string? FindToolRoot()
     {
