@@ -12,4 +12,15 @@ public class ClassImplementsInterface : IService
     {
         Console.WriteLine("Doing another thing...");
     }
+
+    public void DoSomethingElse()
+    {
+        Console.WriteLine("Doing something else...");
+    }
+    public void main()
+    {
+        DoSomething();
+        doAnotherThing();
+        DoSomethingElse();
+    }
 }

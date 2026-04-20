@@ -32,7 +32,7 @@ public class GitService : IGitService
         var currentBranch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
         var shadowBranch = $"docs/{currentBranch}";
 
-        var branchExists = await _processRunner.RunAsync("git", $"rev-parse --verify {shadowBranch}");
+        var branchExists = await _processRunner.RunAsync("git", $"branch --list {shadowBranch}");
         if (string.IsNullOrWhiteSpace(branchExists))
             await _processRunner.RunAsync("git", $"checkout -b {shadowBranch}");
         else
@@ -44,11 +44,6 @@ public class GitService : IGitService
     public async Task CommitAndPushAsync(string message)
     {
         await _processRunner.RunAsync("git", "add -A");
-
-        var status = await _processRunner.RunAsync("git", "status --porcelain");
-        if (string.IsNullOrWhiteSpace(status))
-            return;
-
         await _processRunner.RunAsync("git", $"commit -m \"{message}\"");
 
         var branch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
