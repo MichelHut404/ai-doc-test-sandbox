@@ -5,6 +5,11 @@ public class ClassImplementsInterface : IService
 
     public void DoSomething()
     {
-        throw new NotImplementedException();
+        Console.WriteLine("Doing something...");
     } 
+
+    public void doAnotherThing()
+    {
+        Console.WriteLine("Doing another thing...");
+    }
 }

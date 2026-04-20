@@ -44,6 +44,11 @@ public class GitService : IGitService
     public async Task CommitAndPushAsync(string message)
     {
         await _processRunner.RunAsync("git", "add -A");
+
+        var status = await _processRunner.RunAsync("git", "status --porcelain");
+        if (string.IsNullOrWhiteSpace(status))
+            return;
+
         await _processRunner.RunAsync("git", $"commit -m \"{message}\"");
 
         var branch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();

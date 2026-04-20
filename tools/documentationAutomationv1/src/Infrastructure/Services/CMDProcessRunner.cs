@@ -21,8 +21,16 @@ public class CMDProcessRunner : IProcessRunner
         };
 
         process.Start();
-        var output = await process.StandardOutput.ReadToEndAsync();
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();
+
+        var output = await outputTask;
+        var error = await errorTask;
+
+        if (process.ExitCode != 0)
+            throw new InvalidOperationException(
+                $"'{command} {arguments}' failed (exit {process.ExitCode}).\n{error.Trim()}");
 
         return output;
     }
