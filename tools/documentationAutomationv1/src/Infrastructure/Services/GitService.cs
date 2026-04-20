@@ -32,11 +32,17 @@ public class GitService : IGitService
         var currentBranch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
         var shadowBranch = $"docs/{currentBranch}";
 
-        var branchExists = await _processRunner.RunAsync("git", $"branch --list {shadowBranch}");
-        if (string.IsNullOrWhiteSpace(branchExists))
-            await _processRunner.RunAsync("git", $"checkout -b {shadowBranch}");
-        else
-            await _processRunner.RunAsync("git", $"checkout {shadowBranch}");
+        var localBranchExists = await _processRunner.RunAsync("git", $"branch --list {shadowBranch}");
+        var remoteBranchExists = await _processRunner.RunAsync("git", $"ls-remote --heads origin {shadowBranch}");
+
+        if (!string.IsNullOrWhiteSpace(localBranchExists) || !string.IsNullOrWhiteSpace(remoteBranchExists))
+            throw new InvalidOperationException(
+                $"There is already an existing '{shadowBranch}' branch. " +
+                $"Check if that branch is still needed.\n" +
+                $"  - Has the branch already been merged? Delete the branch and run the build again.\n" +
+                $"  - Has the branch not been merged? Merge it, delete it, and run the build again.");
+
+        await _processRunner.RunAsync("git", $"checkout -b {shadowBranch}");
 
         return shadowBranch;
     }

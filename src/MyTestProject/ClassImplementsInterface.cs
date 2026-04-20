@@ -17,10 +17,16 @@ public class ClassImplementsInterface : IService
     {
         Console.WriteLine("Doing something else...");
     }
+    public void DoSomethingElse2()
+    {
+        Console.WriteLine("Doing something else 2...");
+    }  
+
     public void main()
     {
         DoSomething();
         doAnotherThing();
         DoSomethingElse();
+        DoSomethingElse2();
     }
 }
