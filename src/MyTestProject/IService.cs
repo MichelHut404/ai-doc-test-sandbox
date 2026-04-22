@@ -6,5 +6,7 @@ public interface IService
     void doAnotherThing();
 
     void thisIsBeingIgnored();
+
+    void DoSomethingElse();
     
 }

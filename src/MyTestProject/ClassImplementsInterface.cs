@@ -27,6 +27,11 @@ public class ClassImplementsInterface : IService
         Console.WriteLine("This method is being ignored...");
     }
 
+    public void DoSomethingElse3()
+    {
+        Console.WriteLine("Doing something else 3...");
+    }
+
     public void main()
     {
         DoSomething();
