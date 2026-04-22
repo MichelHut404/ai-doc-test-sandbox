@@ -8,5 +8,7 @@ public interface IService
     void thisIsBeingIgnored();
 
     void DoSomethingElse();
+
+    void testMethod1();
     
 }

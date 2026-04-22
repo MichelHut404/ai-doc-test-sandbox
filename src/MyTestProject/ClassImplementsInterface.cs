@@ -32,6 +32,11 @@ public class ClassImplementsInterface : IService
         Console.WriteLine("Doing something else 3...");
     }
 
+    public void testMethod1()
+    {
+        Console.WriteLine("This is a test method...");
+    }
+
     public void main()
     {
         DoSomething();
