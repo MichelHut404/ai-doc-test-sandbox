@@ -7,4 +7,9 @@ public class TestIgonore
         Console.WriteLine("This method is being ignored...");
     }
 
+    public void thisIsAlsoBeingIgnored()
+    {
+        Console.WriteLine("This method is also being ignored...");
+    }
+
 }
