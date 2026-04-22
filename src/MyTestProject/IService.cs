@@ -4,5 +4,7 @@ public interface IService
 {
     void DoSomething();
     void doAnotherThing();
+
+    void thisIsBeingIgnored();
     
 }

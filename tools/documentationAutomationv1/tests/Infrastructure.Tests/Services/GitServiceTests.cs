@@ -185,7 +185,8 @@ public class GitServiceTests
 public async Task CreateShadowDocBranchAsync_ReturnsShadowBranchName()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("feature/login\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --verify docs/feature/login")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/feature/login")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/feature/login")).ReturnsAsync(string.Empty);
     _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/feature/login")).ReturnsAsync(string.Empty);
 
     var result = await _sut.CreateShadowDocBranchAsync();
@@ -194,14 +195,15 @@ public async Task CreateShadowDocBranchAsync_ReturnsShadowBranchName()
 }
 
 // Verifieert dat 'git checkout -b' wordt gebruikt wanneer de shadow branch nog niet bestaat.
-// 'git rev-parse --verify docs/main' controleert of de branch 'docs/main' bestaat.
-// '--verify' valideert of de opgegeven ref (branch/commit) bestaat in de repository.
-// Een lege string als response betekent dat de branch niet bestaat → 'checkout -b' maakt hem aan.
+// 'branch --list docs/main' retourneert een lege string wanneer de branch lokaal niet bestaat.
+// 'ls-remote --heads origin docs/main' retourneert een lege string wanneer de branch remote niet bestaat.
+// Als beide leeg zijn → 'checkout -b' maakt de nieuwe branch aan.
 [Fact]
 public async Task CreateShadowDocBranchAsync_WhenBranchDoesNotExist_CreatesNewBranch()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --verify docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync(string.Empty);
     _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/main")).ReturnsAsync(string.Empty);
 
     await _sut.CreateShadowDocBranchAsync();
@@ -209,32 +211,43 @@ public async Task CreateShadowDocBranchAsync_WhenBranchDoesNotExist_CreatesNewBr
     _mockRunner.Verify(r => r.RunAsync("git", "checkout -b docs/main"), Times.Once);
 }
 
-// Verifieert dat 'git checkout' (zonder -b) wordt gebruikt wanneer de shadow branch al bestaat.
-// 'rev-parse --verify docs/main' retourneert de commit-hash (bv. 'abc123') als de branch wél bestaat.
-// In dat geval gebruikt de service 'git checkout docs/main' om er naar te switchen zonder opnieuw aan te maken.
-// 'checkout -b' op een bestaande branch zou een fout geven, vandaar de splitsing.
+// Verifieert dat een InvalidOperationException wordt gegooid wanneer de shadow branch al lokaal bestaat.
+// 'branch --list docs/main' retourneert de branchnaam wanneer de branch lokaal aanwezig is.
+// De service gooit een uitzondering zodat de gebruiker handmatig de situatie kan oplossen
+// (bv. samenvoegen of verwijderen van de bestaande branch).
 [Fact]
-public async Task CreateShadowDocBranchAsync_WhenBranchAlreadyExists_ChecksOutExistingBranch()
+public async Task CreateShadowDocBranchAsync_WhenLocalBranchAlreadyExists_ThrowsInvalidOperationException()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --verify docs/main")).ReturnsAsync("abc123");
-    _mockRunner.Setup(r => r.RunAsync("git", "checkout docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync("  docs/main  ");
+    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync(string.Empty);
 
-    await _sut.CreateShadowDocBranchAsync();
+    await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateShadowDocBranchAsync());
+}
 
-    _mockRunner.Verify(r => r.RunAsync("git", "checkout docs/main"), Times.Once);
-    _mockRunner.Verify(r => r.RunAsync("git", "checkout -b docs/main"), Times.Never);
+// Verifieert dat een InvalidOperationException wordt gegooid wanneer de shadow branch al remote bestaat.
+// 'ls-remote --heads origin docs/main' retourneert de ref wanneer de branch op de remote aanwezig is.
+// Ook in dit geval gooit de service een uitzondering om conflicten te voorkomen.
+[Fact]
+public async Task CreateShadowDocBranchAsync_WhenRemoteBranchAlreadyExists_ThrowsInvalidOperationException()
+{
+    _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
+    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync("refs/heads/docs/main");
+
+    await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateShadowDocBranchAsync());
 }
 
 // Verifieert dat de huidige branchnaam wordt getrimd vóór gebruik.
 // 'git rev-parse --abbrev-ref HEAD' geeft regelmatig een trailing newline ('\n') of spaties terug.
 // Zonder .Trim() zou de shadow branch naam 'docs/  feature/login  \n' worden,
-// waardoor 'rev-parse --verify' en 'checkout -b' de verkeerde branchnaam zouden ontvangen.
+// waardoor 'branch --list' en 'checkout -b' de verkeerde branchnaam zouden ontvangen.
 [Fact]
 public async Task CreateShadowDocBranchAsync_CurrentBranchNameIsTrimmed()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("  feature/login  \n");
-    _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --verify docs/feature/login")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/feature/login")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/feature/login")).ReturnsAsync(string.Empty);
     _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/feature/login")).ReturnsAsync(string.Empty);
 
     var result = await _sut.CreateShadowDocBranchAsync();
@@ -242,15 +255,16 @@ public async Task CreateShadowDocBranchAsync_CurrentBranchNameIsTrimmed()
     Assert.Equal("docs/feature/login", result);
 }
 
-// Verifieert dat 'git checkout -b' ook wordt gebruikt wanneer 'rev-parse --verify'
+// Verifieert dat 'git checkout -b' ook wordt gebruikt wanneer 'branch --list'
 // alleen whitespace retourneert (behandeld als niet-bestaand).
 // Dit dekt het geval waar het git-commando onverwacht whitespace teruggeeft in plaats van een lege string.
 // De service gebruikt 'IsNullOrWhiteSpace' in plaats van 'IsNullOrEmpty' om dit op te vangen.
 [Fact]
-public async Task CreateShadowDocBranchAsync_WhenBranchVerifyIsWhitespace_CreatesNewBranch()
+public async Task CreateShadowDocBranchAsync_WhenBranchListIsWhitespace_CreatesNewBranch()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --verify docs/main")).ReturnsAsync("   ");
+    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync("   ");
+    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync(string.Empty);
     _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/main")).ReturnsAsync(string.Empty);
 
     await _sut.CreateShadowDocBranchAsync();

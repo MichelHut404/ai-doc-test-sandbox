@@ -1,4 +1,6 @@
+using System.Text.Json;
 using documentationAutomationv1.Application.Interfaces;
+using Microsoft.Extensions.FileSystemGlobbing;
 using src.Application.DTOs;
 
 namespace documentationAutomationv1.Application.Orchestrators;
@@ -21,25 +23,28 @@ public class CliOrchestrator : BaseOrchestrator
 
         // tijdelijk
         var toolRoot = FindToolRoot();
+        var settings = LoadSettings();
+
 
         var changedFiles = (await GitService.GetChangedFilesAsync())
-            .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
-            .Where(f => File.Exists(f))
-            .ToList();
+        .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+        .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
+        .Where(f => !settings.Exclude.Any(pattern => IsExcluded(f, pattern)))
+        .Where(f => File.Exists(f))
+        .ToList();
 
         foreach (var file in changedFiles)
         {
             Console.WriteLine($"Changed file: {file}");
         }
-
+        
         var allFileContents = await CodeAnalysisService.AnalyzeAsync(changedFiles);
 
         foreach (var fileContent in allFileContents)
         {
             foreach (var type in DetermineDocumentationTypes(fileContent.Content))
             {
-                var doc = await AiDocumentationService.GenerateDocumentationAsync(new[] { fileContent }, type);
+                var doc = await AiDocumentationService.GenerateDocumentationAsync(new[] { fileContent }, type, settings.Language);
                 await MarkdownWriterService.WriteAsync(doc, type);
             }
         }
@@ -62,7 +67,6 @@ public class CliOrchestrator : BaseOrchestrator
             yield return DocumentationType.Relationship;
     }
 
-    //alleen tijdelijk totdat ik van de tool een package maak
 
     private static string? FindToolRoot()
     {
@@ -74,5 +78,35 @@ public class CliOrchestrator : BaseOrchestrator
             dir = dir.Parent;
         }
         return null;
+    }
+
+    private static DocSettings LoadSettings()
+    {
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (dir != null)
+        {
+            var settingsFile = Path.Combine(dir.FullName, "docsettings.json");
+            if (File.Exists(settingsFile))
+            {
+                var json = File.ReadAllText(settingsFile);
+                return JsonSerializer.Deserialize<DocSettings>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new DocSettings();
+            }
+
+            if (dir.GetDirectories(".git").Length > 0)
+                break;
+
+            dir = dir.Parent;
+        }
+        return new DocSettings();
+    }
+
+    private static bool IsExcluded(string filePath, string pattern)
+    {
+        var matcher = new Matcher();
+        matcher.AddInclude(pattern);
+        return matcher.Match(filePath).HasMatches;
     }
 }

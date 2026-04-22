@@ -1,0 +1,8 @@
+{
+  "language": "csharp",
+  "exclude": [
+    "**/*.Designer.cs",
+    "tests/**",
+    "**/IService.cs"
+  ]
+}

@@ -17,7 +17,7 @@ public class AiDocumentationService : IAiDocumentationService
 
     //TODO: foreach maken. voor elke file een api call? en dan meerdere tegelijk als het nodig is voor bijvoorbeeld api flows, relaties etc
 
-    public async Task<string> GenerateDocumentationAsync(IEnumerable<FileContent> fileContents, DocumentationType documentationType)
+    public async Task<string> GenerateDocumentationAsync(IEnumerable<FileContent> fileContents, DocumentationType documentationType, string language)
     {
         var filesSections = string.Join("\n\n", fileContents.Select(f =>
             $"=== {f.FileName} ===\n{f.Content}"));
@@ -28,7 +28,7 @@ public class AiDocumentationService : IAiDocumentationService
         var prompt = builder.Build(filesSections);
 
         return await _chatClient.GenerateResponseAsync(
-            "You are a technical documentation assistant for C# code.",
+            $"You are a technical documentation assistant for {language} code.",
             prompt);
     }
 }
