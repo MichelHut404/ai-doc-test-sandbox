@@ -8,6 +8,11 @@ public class ClassImplementsInterface : IService
         Console.WriteLine("Doing something...");
     } 
 
+    public void thisNeedsToBeDocumented()
+    {
+        Console.WriteLine("This method needs to be documented...");
+    }
+
     public void main()
     {
         DoSomething();
