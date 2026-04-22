@@ -12,6 +12,11 @@ public class GitService : IGitService
         _processRunner = processRunner;
     }
 
+    public async Task<string> GetRepoRootAsync()
+    {
+        return (await _processRunner.RunAsync("git", "rev-parse --show-toplevel")).Trim();
+    }
+
     public async Task<IEnumerable<string>> GetChangedFilesAsync()
     {
         var repoRoot = (await _processRunner.RunAsync("git", "rev-parse --show-toplevel")).Trim();
@@ -50,6 +55,14 @@ public class GitService : IGitService
     public async Task CommitAndPushAsync(string message)
     {
         await _processRunner.RunAsync("git", "add -A");
+
+        var status = await _processRunner.RunAsync("git", "status --porcelain");
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            Console.WriteLine("Nothing to commit, skipping push.");
+            return;
+        }
+
         await _processRunner.RunAsync("git", $"commit -m \"{message}\"");
 
         var branch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();

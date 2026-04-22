@@ -26,12 +26,20 @@ public class CliOrchestrator : BaseOrchestrator
         var settings = LoadSettings();
 
 
+        var gitRoot = await GitService.GetRepoRootAsync();
+
         var changedFiles = (await GitService.GetChangedFilesAsync())
-        .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-        .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
-        .Where(f => !settings.Exclude.Any(pattern => IsExcluded(f, pattern)))
-        .Where(f => File.Exists(f))
-        .ToList();
+            .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+            .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
+            .Where(f => !settings.Exclude.Any(pattern => IsExcluded(f, gitRoot, pattern)))
+            .Where(f => File.Exists(f))
+            .ToList();
+
+        if (changedFiles.Count == 0)
+        {
+            Console.WriteLine("No changed .cs files to document. Skipping.");
+            return;
+        }
 
         foreach (var file in changedFiles)
         {
@@ -103,10 +111,15 @@ public class CliOrchestrator : BaseOrchestrator
         return new DocSettings();
     }
 
-    private static bool IsExcluded(string filePath, string pattern)
+    private static bool IsExcluded(string absolutePath, string repoRoot, string pattern)
     {
+        var normalizedRoot = repoRoot.TrimEnd(Path.DirectorySeparatorChar, '/') + Path.DirectorySeparatorChar;
+        var relativePath = absolutePath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase)
+            ? absolutePath[normalizedRoot.Length..].Replace('\\', '/')
+            : absolutePath.Replace('\\', '/');
+
         var matcher = new Matcher();
         matcher.AddInclude(pattern);
-        return matcher.Match(filePath).HasMatches;
+        return matcher.Match(relativePath).HasMatches;
     }
 }
