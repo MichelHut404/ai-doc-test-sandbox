@@ -1,8 +1,8 @@
 {
-  "language": "csharp",
+  "languagefileextension": ".cs",
   "exclude": [
     "**/*.Designer.cs",
     "tests/**",
-    "**/IService.cs"
+    "**/TestIgonore.cs"
   ]
 }

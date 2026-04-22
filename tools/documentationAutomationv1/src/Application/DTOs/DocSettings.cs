@@ -2,6 +2,6 @@ namespace src.Application.DTOs;
 
 public class DocSettings
 {
-    public string Language { get; set; } = "csharp";
+    public string languageFileExtension { get; set; }
     public List<string> Exclude { get; set; } = new();
 }
