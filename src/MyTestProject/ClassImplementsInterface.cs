@@ -12,6 +12,10 @@ public class ClassImplementsInterface : IService
     {
         Console.WriteLine("This method needs to be documented...");
     }
+    public void test(){
+        Console.WriteLine("This method needs to be documented...");
+
+    }
 
     public void main()
     {
