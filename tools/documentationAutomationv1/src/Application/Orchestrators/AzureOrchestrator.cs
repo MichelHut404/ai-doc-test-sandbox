@@ -1,29 +1,30 @@
-using System.Text.Json;
 using documentationAutomationv1.Application.Interfaces;
-using Microsoft.Extensions.FileSystemGlobbing;
-using src.Application.DTOs;
-
 namespace documentationAutomationv1.Application.Orchestrators;
 
-public class CliOrchestrator : BaseOrchestrator
+public class AzureOrchestrator : BaseOrchestrator
 {
-    public CliOrchestrator(
+    public AzureOrchestrator(
         IAiDocumentationService aiDocumentationService,
         ICodeAnalysisService codeAnalysisService,
         IGitService gitService,
-        IMarkdownWriterService markdownWriterService)
+        IMarkdownWriterService markdownWriterService,
+        ISettingsService settingsService)
         : base(aiDocumentationService, codeAnalysisService, gitService, markdownWriterService)
     {
+        SettingsService = settingsService;
     }
+
+    private ISettingsService SettingsService { get; }
 
     public override async Task RunAsync()
     {
         Console.WriteLine("[docs] Starting documentation generation...");
 
         Console.WriteLine("[docs] Loading settings from docsettings.json...");
-        var settings = LoadSettings();
+        var settings = SettingsService.LoadSettings();
+        
         Console.WriteLine($"[docs] Language extension: .{settings.languageFileExtension}");
-        Console.WriteLine($"[docs] Exclude patterns: {(settings.Exclude.Count == 0 ? "(none)" : string.Join(", ", settings.Exclude))}");
+        Console.WriteLine($"[docs] Exclude: {(settings.Exclude.Count == 0 ? "(none)" : string.Join(", ", settings.Exclude))}");
 
         Console.WriteLine("[docs] Creating shadow doc branch...");
         var docBranch = await GitService.CreateShadowDocBranchAsync();
@@ -38,7 +39,7 @@ public class CliOrchestrator : BaseOrchestrator
         var changedFiles = (await GitService.GetChangedFilesAsync())
             .Where(f => f.EndsWith($".{settings.languageFileExtension}", StringComparison.OrdinalIgnoreCase))
             .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
-            .Where(f => !settings.Exclude.Any(pattern => IsExcluded(f, gitRoot, pattern)))
+            .Where(f => !settings.Exclude.Any(pattern => SettingsService.IsExcluded(f, gitRoot, pattern)))
             .Where(f => File.Exists(f))
             .ToList();
 
@@ -78,63 +79,5 @@ public class CliOrchestrator : BaseOrchestrator
 
         Console.WriteLine("[docs] Done.");
     }
-    // voeg hier nieuwe DocumentationTypes toe als dat nodig is.
-    private static IEnumerable<DocumentationType> DetermineDocumentationTypes(string content)
-    {
-        yield return DocumentationType.ClassDescriptionAndMethodDescription;
 
-        if (content.Contains("[HttpGet]") || content.Contains("[HttpPost]"))
-            yield return DocumentationType.ApiFlow;
-
-        if (content.Contains(": I") || content.Contains("interface"))
-            yield return DocumentationType.Relationship;
-    }
-
-
-    private static string? FindToolRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (dir.GetFiles("*.sln").Length > 0)
-                return dir.FullName + Path.DirectorySeparatorChar;
-            dir = dir.Parent;
-        }
-        return null;
-    }
-
-    private static DocSettings LoadSettings()
-    {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir != null)
-        {
-            var settingsFile = Path.Combine(dir.FullName, "docsettings.json");
-            if (File.Exists(settingsFile))
-            {
-                var json = File.ReadAllText(settingsFile);
-                return JsonSerializer.Deserialize<DocSettings>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                }) ?? new DocSettings();
-            }
-
-            if (dir.GetDirectories(".git").Length > 0)
-                break;
-
-            dir = dir.Parent;
-        }
-        return new DocSettings();
-    }
-
-    private static bool IsExcluded(string absolutePath, string repoRoot, string pattern)
-    {
-        var normalizedRoot = repoRoot.TrimEnd(Path.DirectorySeparatorChar, '/') + Path.DirectorySeparatorChar;
-        var relativePath = absolutePath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase)
-            ? absolutePath[normalizedRoot.Length..].Replace('\\', '/')
-            : absolutePath.Replace('\\', '/');
-
-        var matcher = new Matcher();
-        matcher.AddInclude(pattern);
-        return matcher.Match(relativePath).HasMatches;
-    }
 }

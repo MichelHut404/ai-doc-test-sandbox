@@ -28,14 +28,15 @@ services.AddScoped<IAiDocumentationService>(sp =>
         sp.GetRequiredService<IChatClient>(),
         sp.GetServices<IPromptBuilder>()));
 services.AddScoped<ICodeAnalysisService, CodeAnalysisService>();
+services.AddScoped<ISettingsService, SettingsService>();
 services.AddScoped<IProcessRunner, CMDProcessRunner>();
 services.AddScoped<IGitService, GitService>();
 var docsBasePath = configuration["Documentation:BasePath"] ?? "docs";
 services.AddScoped<IMarkdownWriterService>(_ => new MarkdownWriterService(docsBasePath));
-services.AddScoped<CliOrchestrator>();
+services.AddScoped<AzureOrchestrator>();
 
 var serviceProvider = services.BuildServiceProvider();
 
-var orchestrator = serviceProvider.GetRequiredService<CliOrchestrator>();
+var orchestrator = serviceProvider.GetRequiredService<AzureOrchestrator>();
 await orchestrator.RunAsync();
 

@@ -17,7 +17,6 @@ public class MarkdownWriterService : IMarkdownWriterService
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Content may not be empty.", nameof(content));
 
-        //TODO: Ai documentatie de titel laten genereren.
         var fileName = $"documentation_{DateTime.Now:yyyyMMdd_HHmmss}.md";
         string subFolder = documentationType switch
         {

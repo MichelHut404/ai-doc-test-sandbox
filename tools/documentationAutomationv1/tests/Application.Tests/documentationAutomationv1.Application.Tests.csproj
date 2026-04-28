@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Moq" />
+    <Using Include="documentationAutomationv1.Application.Interfaces" />
+    <Using Include="documentationAutomationv1.Application.Orchestrators" />
+    <Using Include="src.Application.DTOs" />
   </ItemGroup>
 
   <ItemGroup>

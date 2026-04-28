@@ -15,6 +15,30 @@ public class GitServiceTests
         _sut = new GitService(_mockRunner.Object);
     }
 
+    // ── GetRepoRootAsync ──────────────────────────────────────────────────────
+
+    // Verifieert dat GetRepoRootAsync het resultaat van 'git rev-parse --show-toplevel' teruggegeven.
+    [Fact]
+    public async Task GetRepoRootAsync_ReturnsRepoRoot()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --show-toplevel")).ReturnsAsync("/repo\n");
+
+        var result = await _sut.GetRepoRootAsync();
+
+        Assert.Equal("/repo", result);
+    }
+
+    // Verifieert dat de repo root wordt getrimd zodat trailing newlines en spaties worden verwijderd.
+    [Fact]
+    public async Task GetRepoRootAsync_ResultIsTrimmed()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --show-toplevel")).ReturnsAsync("  /repo  \n");
+
+        var result = await _sut.GetRepoRootAsync();
+
+        Assert.Equal("/repo", result);
+    }
+
     // __________________getchangedfilesasync tests__________________________:
 
     // Verifieert dat 'git diff --name-only HEAD~1 HEAD' wordt gebruikt wanneer HEAD~1 bestaat.
@@ -281,6 +305,7 @@ public async Task CreateShadowDocBranchAsync_WhenBranchListIsWhitespace_CreatesN
     public async Task CommitAndPushAsync_StagesAllChanges_RunsGitAddA()
     {
         _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "status --porcelain")).ReturnsAsync("M src/Foo.cs");
         _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
         _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
         _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin main")).ReturnsAsync(string.Empty);
@@ -290,12 +315,28 @@ public async Task CreateShadowDocBranchAsync_WhenBranchListIsWhitespace_CreatesN
         _mockRunner.Verify(r => r.RunAsync("git", "add -A"), Times.Once);
     }
 
+    // Verifieert dat commit en push worden overgeslagen wanneer 'git status --porcelain' leeg is.
+    // 'status --porcelain' geeft een lege string terug wanneer er niets te committen valt.
+    // In dat geval stopt de service vroeg om een lege commit te voorkomen.
+    [Fact]
+    public async Task CommitAndPushAsync_WhenNothingToCommit_SkipsCommitAndPush()
+    {
+        _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "status --porcelain")).ReturnsAsync(string.Empty);
+
+        await _sut.CommitAndPushAsync("docs: update");
+
+        _mockRunner.Verify(r => r.RunAsync("git", It.Is<string>(a => a.StartsWith("commit"))), Times.Never);
+        _mockRunner.Verify(r => r.RunAsync("git", It.Is<string>(a => a.StartsWith("push"))), Times.Never);
+    }
+
     // Verifieert dat 'git commit -m "<message>"' wordt aangeroepen met het opgegeven bericht.
     // Het commit-bericht wordt tussen aanhalingstekens geplaatst zodat spaties correct worden doorgegeven.
     [Fact]
     public async Task CommitAndPushAsync_CommitsWithGivenMessage_RunsGitCommit()
     {
         _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "status --porcelain")).ReturnsAsync("M src/Foo.cs");
         _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
         _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
         _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin main")).ReturnsAsync(string.Empty);
@@ -312,6 +353,7 @@ public async Task CreateShadowDocBranchAsync_WhenBranchListIsWhitespace_CreatesN
     public async Task CommitAndPushAsync_PushesWithSetUpstreamToOrigin_RunsGitPush()
     {
         _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "status --porcelain")).ReturnsAsync("M src/Foo.cs");
         _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
         _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("feature/login\n");
         _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin feature/login")).ReturnsAsync(string.Empty);
@@ -329,6 +371,7 @@ public async Task CreateShadowDocBranchAsync_WhenBranchListIsWhitespace_CreatesN
     public async Task CommitAndPushAsync_BranchNameIsTrimmed_PushUsesCleanBranchName()
     {
         _mockRunner.Setup(r => r.RunAsync("git", "add -A")).ReturnsAsync(string.Empty);
+        _mockRunner.Setup(r => r.RunAsync("git", "status --porcelain")).ReturnsAsync("M src/Foo.cs");
         _mockRunner.Setup(r => r.RunAsync("git", "commit -m \"docs: update\"")).ReturnsAsync(string.Empty);
         _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("  main  \n");
         _mockRunner.Setup(r => r.RunAsync("git", "push --set-upstream origin main")).ReturnsAsync(string.Empty);

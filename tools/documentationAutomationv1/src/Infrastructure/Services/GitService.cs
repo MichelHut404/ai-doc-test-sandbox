@@ -6,7 +6,6 @@ namespace src.Infrastructure;
 public class GitService : IGitService
 {
     private readonly IProcessRunner _processRunner;
-
     public GitService(IProcessRunner processRunner)
     {
         _processRunner = processRunner;

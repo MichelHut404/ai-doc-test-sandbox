@@ -15,8 +15,6 @@ public class AiDocumentationService : IAiDocumentationService
         _promptBuilders = promptBuilders.ToDictionary(p => p.DocumentationType);
     }
 
-    //TODO: foreach maken. voor elke file een api call? en dan meerdere tegelijk als het nodig is voor bijvoorbeeld api flows, relaties etc
-
     public async Task<string> GenerateDocumentationAsync(IEnumerable<FileContent> fileContents, DocumentationType documentationType, string language)
     {
         var filesSections = string.Join("\n\n", fileContents.Select(f =>
@@ -32,4 +30,3 @@ public class AiDocumentationService : IAiDocumentationService
             prompt);
     }
 }
-

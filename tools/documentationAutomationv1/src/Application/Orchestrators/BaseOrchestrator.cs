@@ -1,4 +1,5 @@
 using documentationAutomationv1.Application.Interfaces;
+using src.Application.DTOs;
 
 namespace documentationAutomationv1.Application.Orchestrators;
 
@@ -21,5 +22,27 @@ public abstract class BaseOrchestrator
 
     public abstract Task RunAsync();
 
+    protected static IEnumerable<DocumentationType> DetermineDocumentationTypes(string content)
+    {
+        yield return DocumentationType.ClassDescriptionAndMethodDescription;
 
+        if (content.Contains("[HttpGet]") || content.Contains("[HttpPost]"))
+            yield return DocumentationType.ApiFlow;
+
+        if (content.Contains(": I") || content.Contains("interface"))
+            yield return DocumentationType.Relationship;
+    }
+
+    protected static string? FindToolRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            //TODO: look at .slnx
+            if (dir.GetFiles("*.sln").Length > 0)
+                return dir.FullName + Path.DirectorySeparatorChar;
+            dir = dir.Parent;
+        }
+        return null;
+    }
 }
