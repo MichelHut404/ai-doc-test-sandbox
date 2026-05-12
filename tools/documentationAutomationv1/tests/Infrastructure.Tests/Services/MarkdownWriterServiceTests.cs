@@ -1,4 +1,4 @@
-using src.Application.DTOs;
+using src.Domain.ValueObjects;
 using src.Infrastructure;
 
 namespace documentationAutomationv1.Infrastructure.Tests.Services;

@@ -1,5 +1,5 @@
 
-using src.Application.DTOs;
+using src.Domain.ValueObjects;
 
 namespace documentationAutomationv1.Application.Interfaces;
 

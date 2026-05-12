@@ -1,6 +1,6 @@
 namespace src.Infrastructure.Services;
 using documentationAutomationv1.Application.Interfaces;
-using src.Application.DTOs;
+using src.Domain.ValueObjects;
 
 public class CodeAnalysisService : ICodeAnalysisService
 {

@@ -1,6 +1,6 @@
 using documentationAutomationv1.Application.Interfaces;
 using Moq;
-using src.Application.DTOs;
+using src.Domain.ValueObjects;
 using src.Infrastructure.Interfaces;
 using src.Infrastructure.Services;
 

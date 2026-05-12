@@ -5,7 +5,7 @@ using src.Infrastructure.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using src.Infrastructure;
 using src.Infrastructure.Services;
-using src.Infrastructure.Services.PromptBuilders;
+using src.Application.Services.PromptBuilders;
 
 var configuration = new ConfigurationBuilder()
     .AddUserSecrets<Program>()

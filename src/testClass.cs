@@ -10,5 +10,10 @@ public class testClass
         // prints info
         Console.WriteLine($"Name: {name}, Age: {age}");
     }
+    public void printAnotherThing()
+    {
+        // prints another thing
+        Console.WriteLine("This is another thing.");
+    }
 
 }

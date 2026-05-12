@@ -1,7 +1,7 @@
 namespace src.Infrastructure.Services;
 
 using documentationAutomationv1.Application.Interfaces;
-using src.Application.DTOs;
+using src.Domain.ValueObjects;
 using src.Infrastructure.Interfaces;
 
 public class AiDocumentationService : IAiDocumentationService

@@ -3,6 +3,7 @@ namespace documentationAutomationv1.Application.Orchestrators;
 
 public class AzureOrchestrator : BaseOrchestrator
 {
+    private ISettingsService SettingsService { get; }
     public AzureOrchestrator(
         IAiDocumentationService aiDocumentationService,
         ICodeAnalysisService codeAnalysisService,
@@ -14,7 +15,6 @@ public class AzureOrchestrator : BaseOrchestrator
         SettingsService = settingsService;
     }
 
-    private ISettingsService SettingsService { get; }
 
     public override async Task RunAsync()
     {

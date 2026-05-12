@@ -1,7 +1,7 @@
 using documentationAutomationv1.Application.Interfaces;
-using src.Application.DTOs;
+using src.Domain.ValueObjects;
 
-namespace src.Infrastructure.Services.PromptBuilders;
+namespace src.Application.Services.PromptBuilders;
 
 public class RelationshipPromptBuilder : IPromptBuilder
 {

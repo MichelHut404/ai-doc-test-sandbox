@@ -1,4 +1,4 @@
-namespace src.Application.DTOs;
+namespace src.Domain.ValueObjects;
 
 public class FileContent
 {
