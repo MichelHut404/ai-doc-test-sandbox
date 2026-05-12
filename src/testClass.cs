@@ -15,5 +15,10 @@ public class testClass
         // prints another thing
         Console.WriteLine("This is another thing.");
     }
+    public void printYetAnotherThing()
+    {
+        // prints yet another thing
+        Console.WriteLine("This is yet another thing.");
+    }
 
 }
