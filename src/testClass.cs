@@ -5,17 +5,17 @@ public class testClass
     public string name { get; set; }
     public int age { get; set; }    
 
-    public void printInfo()
+    public static void printInfo()
     {
         // prints info
         Console.WriteLine($"Name: {name}, Age: {age}");
     }
-    public void printAnotherThing()
+    public static void printAnotherThing()
     {
         // prints another thing
         Console.WriteLine("This is another thing.");
     }
-    public void printYetAnotherThing()
+    public static void printYetAnotherThing()
     {
         // prints yet another thing
         Console.WriteLine("This is yet another thing.");

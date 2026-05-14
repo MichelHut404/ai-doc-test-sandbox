@@ -17,11 +17,7 @@ public class AzureChatClient : IChatClient
 
     public async Task<string> GenerateResponseAsync(string systemMessage, string userMessage)
     {
-        var response = await _chatClient.CompleteChatAsync(
-        [
-            new OpenAI.Chat.SystemChatMessage(systemMessage),
-            new OpenAI.Chat.UserChatMessage(userMessage)
-        ]);
+        var response = await _chatClient.CompleteChatAsync(new OpenAI.Chat.SystemChatMessage(systemMessage),new OpenAI.Chat.UserChatMessage(userMessage));
 
         return response.Value.Content[0].Text;
     }

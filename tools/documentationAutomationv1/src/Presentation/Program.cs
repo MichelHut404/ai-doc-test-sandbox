@@ -29,7 +29,7 @@ services.AddScoped<IAiDocumentationService>(sp =>
         sp.GetServices<IPromptBuilder>()));
 services.AddScoped<ICodeAnalysisService, CodeAnalysisService>();
 services.AddScoped<ISettingsService, SettingsService>();
-services.AddScoped<IProcessRunner, CMDProcessRunner>();
+services.AddScoped<IProcessRunner, CmdProcessRunner>();
 services.AddScoped<IGitService, GitService>();
 var docsBasePath = configuration["Documentation:BasePath"] ?? "docs";
 services.AddScoped<IMarkdownWriterService>(_ => new MarkdownWriterService(docsBasePath));

@@ -3,7 +3,7 @@ using src.Infrastructure.Interfaces;
 
 namespace src.Infrastructure.Services;
 
-public class CMDProcessRunner : IProcessRunner
+public class CmdProcessRunner : IProcessRunner
 {
     public async Task<string> RunAsync(string command, string arguments)
     {
