@@ -16,4 +16,10 @@ public class testClass
         Console.WriteLine($"My name is {name}");
     }
 
+    public static void printMyAge()
+    {
+        // prints age
+        Console.WriteLine($"My age is {age}");
+    }
+
 }
