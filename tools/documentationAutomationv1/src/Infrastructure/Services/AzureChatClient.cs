@@ -27,7 +27,10 @@ public class AzureChatClient : IChatClient
 
     public async Task<IDocumentationOutput> GenerateStructuredResponseAsync(string systemMessage, string userMessage, Type outputType)
     {
-        var schemaNode = JsonSchemaExporter.GetJsonSchemaAsNode(JsonSerializerOptions.Default, outputType);
+        var schemaNode = JsonSchemaExporter.GetJsonSchemaAsNode(
+        JsonSerializerOptions.Default,
+        outputType,
+        new JsonSchemaExporterOptions { TreatNullObliviousAsNonNullable = true });
         var options = new OpenAI.Chat.ChatCompletionOptions
         {
             ResponseFormat = OpenAI.Chat.ChatResponseFormat.CreateJsonSchemaFormat(

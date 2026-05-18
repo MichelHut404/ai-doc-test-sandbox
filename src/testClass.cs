@@ -10,16 +10,10 @@ public class testClass
         // prints info
         Console.WriteLine($"Name: {name}, Age: {age}");
     }
-    public static void printMyName()
+    public void testMethod()
     {
-        // prints name
-        Console.WriteLine($"My name is {name}");
-    }
-
-    public static void printMyAge()
-    {
-        // prints age
-        Console.WriteLine($"My age is {age}");
+        // does something
+        Console.WriteLine("This is a test method.");
     }
 
 }
