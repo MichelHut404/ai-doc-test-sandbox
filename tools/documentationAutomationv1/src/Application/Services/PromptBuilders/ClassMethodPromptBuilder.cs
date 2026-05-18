@@ -1,3 +1,4 @@
+using documentationAutomationv1.Application.DTOs;
 using documentationAutomationv1.Application.Interfaces;
 using src.Domain.ValueObjects;
 
@@ -7,6 +8,7 @@ public class ClassMethodPromptBuilder : IPromptBuilder
 {
     public DocumentationType DocumentationType => DocumentationType.ClassDescriptionAndMethodDescription;
 
+    public Type OutputType => typeof(ClassMethodDocumentation);
     public string Build(string filesSections) => $"""
         Generate clear technical documentation in English for the following C# files.
         Describe per file what it does, which classes it contains and what those classes do.
