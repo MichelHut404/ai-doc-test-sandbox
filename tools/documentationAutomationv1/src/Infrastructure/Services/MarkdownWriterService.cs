@@ -26,7 +26,7 @@ public class MarkdownWriterService : IMarkdownWriterService
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        var fileName = $"documentation_{DateTime.Now:yyyyMMdd_HHmmss}_{Environment.UserName}.md";
+        var fileName = $"documentation_{DateTime.Now:yyyyMMdd_HHmmss}.md";
         string subFolder = documentationType switch
         {
             DocumentationType.ClassDescriptionAndMethodDescription => "ClassMethodDocumentation",
