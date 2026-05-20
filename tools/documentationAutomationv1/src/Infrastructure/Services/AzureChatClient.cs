@@ -1,8 +1,5 @@
 using System.ClientModel;
-using System.Text.Json;
-using System.Text.Json.Schema;
 using Azure.AI.OpenAI;
-using documentationAutomationv1.Application.Interfaces;
 using src.Infrastructure.Interfaces;
 
 namespace src.Infrastructure.Services;
@@ -23,41 +20,5 @@ public class AzureChatClient : IChatClient
         var response = await _chatClient.CompleteChatAsync(new OpenAI.Chat.SystemChatMessage(systemMessage),new OpenAI.Chat.UserChatMessage(userMessage));
 
         return response.Value.Content[0].Text;
-    }
-
-    public async Task<IDocumentationOutput> GenerateStructuredResponseAsync(string systemMessage, string userMessage, Type outputType)
-    {
-       
-       var schemaNode = JsonSchemaExporter.GetJsonSchemaAsNode(
-        JsonSerializerOptions.Default,
-        outputType,
-        new JsonSchemaExporterOptions
-        {
-            TreatNullObliviousAsNonNullable = true,
-            TransformSchemaNode = (ctx, node) =>
-            {
-                if (node is System.Text.Json.Nodes.JsonObject obj &&
-                    obj["type"]?.GetValue<string>() == "object")
-                {
-                    obj["additionalProperties"] = false;
-                }
-                return node;
-            }
-        });
-
-        var options = new OpenAI.Chat.ChatCompletionOptions
-        {
-            ResponseFormat = OpenAI.Chat.ChatResponseFormat.CreateJsonSchemaFormat(
-                jsonSchemaFormatName: outputType.Name,
-                jsonSchema: BinaryData.FromString(schemaNode.ToJsonString()),
-                jsonSchemaIsStrict: true)
-        };
-
-        var response = await _chatClient.CompleteChatAsync(
-            [new OpenAI.Chat.SystemChatMessage(systemMessage), new OpenAI.Chat.UserChatMessage(userMessage)],
-            options);
-
-        var json = response.Value.Content[0].Text;
-        return (IDocumentationOutput)JsonSerializer.Deserialize(json, outputType)!;
     }
 }

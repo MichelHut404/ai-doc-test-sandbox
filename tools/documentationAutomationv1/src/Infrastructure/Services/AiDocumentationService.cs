@@ -15,7 +15,7 @@ public class AiDocumentationService : IAiDocumentationService
         _promptBuilders = promptBuilders.ToDictionary(p => p.DocumentationType);
     }
 
-    public async Task<IDocumentationOutput> GenerateDocumentationAsync(IEnumerable<FileContent> fileContents, DocumentationType documentationType, string language)
+    public async Task<string> GenerateDocumentationAsync(IEnumerable<FileContent> fileContents, DocumentationType documentationType, string language)
     {
         var filesSections = string.Join("\n\n", fileContents.Select(f =>
             $"=== {f.FileName} ===\n{f.Content}"));
@@ -25,10 +25,8 @@ public class AiDocumentationService : IAiDocumentationService
             
         var prompt = builder.Build(filesSections);
 
-        return await _chatClient.GenerateStructuredResponseAsync(
+        return await _chatClient.GenerateResponseAsync(
             $"You are a technical documentation assistant for {language} code.",
-            prompt,
-            builder.OutputType);
-
+            prompt);
     }
 }

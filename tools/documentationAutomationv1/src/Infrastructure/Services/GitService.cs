@@ -34,7 +34,7 @@ public class GitService : IGitService
     public async Task<string> CreateShadowDocBranchAsync()
     {
         var currentBranch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
-        var shadowBranch = $"docs/{currentBranch}/{DateTime.Now:yyyyMMdd_HHmmss}";
+        var shadowBranch = $"docs/{currentBranch}";
 
         var localBranchExists = await _processRunner.RunAsync("git", $"branch --list {shadowBranch}");
         var remoteBranchExists = await _processRunner.RunAsync("git", $"ls-remote --heads origin {shadowBranch}");

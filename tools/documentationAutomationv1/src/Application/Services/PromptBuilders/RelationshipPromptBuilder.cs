@@ -1,4 +1,3 @@
-using documentationAutomationv1.Application.DTOs;
 using documentationAutomationv1.Application.Interfaces;
 using src.Domain.ValueObjects;
 
@@ -8,7 +7,6 @@ public class RelationshipPromptBuilder : IPromptBuilder
 {
     public DocumentationType DocumentationType => DocumentationType.Relationship;
 
-    public Type OutputType => typeof(RelationshipDocumentation);
     public string Build(string filesSections) => $"""
         Generate documentation in English for the following C# files, focusing on class and interface relationships.
         Describe inheritance, implementations, and associations.
