@@ -209,13 +209,13 @@ public class GitServiceTests
 public async Task CreateShadowDocBranchAsync_ReturnsShadowBranchName()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("feature/login\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/feature/login")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/feature/login")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/feature/login")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("branch --list docs/feature/login/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("ls-remote --heads origin docs/feature/login/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("checkout -b docs/feature/login/")))).ReturnsAsync(string.Empty);
 
     var result = await _sut.CreateShadowDocBranchAsync();
 
-    Assert.Equal("docs/feature/login", result);
+    Assert.StartsWith("docs/feature/login/", result);
 }
 
 // Verifieert dat 'git checkout -b' wordt gebruikt wanneer de shadow branch nog niet bestaat.
@@ -226,13 +226,13 @@ public async Task CreateShadowDocBranchAsync_ReturnsShadowBranchName()
 public async Task CreateShadowDocBranchAsync_WhenBranchDoesNotExist_CreatesNewBranch()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("branch --list docs/main/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("ls-remote --heads origin docs/main/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("checkout -b docs/main/")))).ReturnsAsync(string.Empty);
 
     await _sut.CreateShadowDocBranchAsync();
 
-    _mockRunner.Verify(r => r.RunAsync("git", "checkout -b docs/main"), Times.Once);
+    _mockRunner.Verify(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("checkout -b docs/main/"))), Times.Once);
 }
 
 // Verifieert dat een InvalidOperationException wordt gegooid wanneer de shadow branch al lokaal bestaat.
@@ -243,8 +243,8 @@ public async Task CreateShadowDocBranchAsync_WhenBranchDoesNotExist_CreatesNewBr
 public async Task CreateShadowDocBranchAsync_WhenLocalBranchAlreadyExists_ThrowsInvalidOperationException()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync("  docs/main  ");
-    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("branch --list docs/main/")))).ReturnsAsync("  docs/main/20260519_120000  ");
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("ls-remote --heads origin docs/main/")))).ReturnsAsync(string.Empty);
 
     await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateShadowDocBranchAsync());
 }
@@ -256,8 +256,8 @@ public async Task CreateShadowDocBranchAsync_WhenLocalBranchAlreadyExists_Throws
 public async Task CreateShadowDocBranchAsync_WhenRemoteBranchAlreadyExists_ThrowsInvalidOperationException()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync("refs/heads/docs/main");
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("branch --list docs/main/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("ls-remote --heads origin docs/main/")))).ReturnsAsync("refs/heads/docs/main/20260519_120000");
 
     await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateShadowDocBranchAsync());
 }
@@ -270,13 +270,13 @@ public async Task CreateShadowDocBranchAsync_WhenRemoteBranchAlreadyExists_Throw
 public async Task CreateShadowDocBranchAsync_CurrentBranchNameIsTrimmed()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("  feature/login  \n");
-    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/feature/login")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/feature/login")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/feature/login")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("branch --list docs/feature/login/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("ls-remote --heads origin docs/feature/login/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("checkout -b docs/feature/login/")))).ReturnsAsync(string.Empty);
 
     var result = await _sut.CreateShadowDocBranchAsync();
 
-    Assert.Equal("docs/feature/login", result);
+    Assert.StartsWith("docs/feature/login/", result);
 }
 
 // Verifieert dat 'git checkout -b' ook wordt gebruikt wanneer 'branch --list'
@@ -287,13 +287,13 @@ public async Task CreateShadowDocBranchAsync_CurrentBranchNameIsTrimmed()
 public async Task CreateShadowDocBranchAsync_WhenBranchListIsWhitespace_CreatesNewBranch()
 {
     _mockRunner.Setup(r => r.RunAsync("git", "rev-parse --abbrev-ref HEAD")).ReturnsAsync("main\n");
-    _mockRunner.Setup(r => r.RunAsync("git", "branch --list docs/main")).ReturnsAsync("   ");
-    _mockRunner.Setup(r => r.RunAsync("git", "ls-remote --heads origin docs/main")).ReturnsAsync(string.Empty);
-    _mockRunner.Setup(r => r.RunAsync("git", "checkout -b docs/main")).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("branch --list docs/main/")))).ReturnsAsync("   ");
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("ls-remote --heads origin docs/main/")))).ReturnsAsync(string.Empty);
+    _mockRunner.Setup(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("checkout -b docs/main/")))).ReturnsAsync(string.Empty);
 
     await _sut.CreateShadowDocBranchAsync();
 
-    _mockRunner.Verify(r => r.RunAsync("git", "checkout -b docs/main"), Times.Once);
+    _mockRunner.Verify(r => r.RunAsync("git", It.Is<string>(s => s.StartsWith("checkout -b docs/main/"))), Times.Once);
 }
 
     // ── CommitAndPushAsync ─────────────────────────────────────────────────────

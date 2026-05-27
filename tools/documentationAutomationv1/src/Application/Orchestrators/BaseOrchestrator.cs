@@ -1,4 +1,5 @@
 using documentationAutomationv1.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 using src.Domain.ValueObjects;
 
 namespace documentationAutomationv1.Application.Orchestrators;
@@ -9,15 +10,17 @@ public abstract class BaseOrchestrator
     protected ICodeAnalysisService CodeAnalysisService;
     protected IGitService GitService;
     protected IMarkdownWriterService MarkdownWriterService;
+    protected ILogger Logger {get;}
     
 
     protected BaseOrchestrator(
-        IAiDocumentationService aiDocumentationService, ICodeAnalysisService codeAnalysisService, IGitService gitService, IMarkdownWriterService markdownWriterService)
+        IAiDocumentationService aiDocumentationService, ICodeAnalysisService codeAnalysisService, IGitService gitService, IMarkdownWriterService markdownWriterService, ILogger logger)
     {
         AiDocumentationService = aiDocumentationService;
         CodeAnalysisService = codeAnalysisService;
         GitService = gitService;
         MarkdownWriterService = markdownWriterService;
+        Logger = logger;
     }
 
     public abstract Task RunAsync();

@@ -1,3 +1,4 @@
+using documentationAutomationv1.Application.DTOs;
 using documentationAutomationv1.Application.Interfaces;
 using Moq;
 using src.Domain.ValueObjects;
@@ -28,8 +29,8 @@ public class AiDocumentationServiceTests
     public async Task GenerateDocumentationAsync_CallsPromptBuilderWithFilesSections()
     {
         var files = new[] { new FileContent("File.cs", "public class Foo {}") };
-        _chatClientMock.Setup(c => c.GenerateResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync("generated docs");
+        _chatClientMock.Setup(c => c.GenerateStructuredResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Type>()))
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
 
         await _sut.GenerateDocumentationAsync(files, DocumentationType.ApiFlow, "csharp");
 
@@ -44,14 +45,16 @@ public class AiDocumentationServiceTests
     {
         var files = new[] { new FileContent("File.cs", "content") };
         _promptBuilderMock.Setup(p => p.Build(It.IsAny<string>())).Returns("built prompt");
-        _chatClientMock.Setup(c => c.GenerateResponseAsync(It.IsAny<string>(), "built prompt"))
-            .ReturnsAsync("generated docs");
+        _promptBuilderMock.Setup(p => p.OutputType).Returns(typeof(ApiFlowDocumentation));
+        _chatClientMock.Setup(c => c.GenerateStructuredResponseAsync(It.IsAny<string>(), "built prompt", It.IsAny<Type>()))
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
 
         await _sut.GenerateDocumentationAsync(files, DocumentationType.ApiFlow, "csharp");
 
-        _chatClientMock.Verify(c => c.GenerateResponseAsync(
+        _chatClientMock.Verify(c => c.GenerateStructuredResponseAsync(
             "You are a technical documentation assistant for csharp code.",
-            "built prompt"), Times.Once);
+            "built prompt",
+            It.IsAny<Type>()), Times.Once);
     }
 
     // Verifieert dat de service de ruwe response van de chat client ongewijzigd teruggeeft.
@@ -61,12 +64,13 @@ public class AiDocumentationServiceTests
     public async Task GenerateDocumentationAsync_ReturnsChatClientResponse()
     {
         var files = new[] { new FileContent("File.cs", "content") };
-        _chatClientMock.Setup(c => c.GenerateResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync("expected output");
+        var expectedOutput = Mock.Of<IDocumentationOutput>();
+        _chatClientMock.Setup(c => c.GenerateStructuredResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Type>()))
+            .ReturnsAsync(expectedOutput);
 
         var result = await _sut.GenerateDocumentationAsync(files, DocumentationType.ApiFlow, "csharp");
 
-        Assert.Equal("expected output", result);
+        Assert.Equal(expectedOutput, result);
     }
 
     // Verifieert dat een onbekend 'DocumentationType' een 'ArgumentOutOfRangeException' gooit.
@@ -93,8 +97,8 @@ public class AiDocumentationServiceTests
             new FileContent("A.cs", "class A {}"),
             new FileContent("B.cs", "class B {}")
         };
-        _chatClientMock.Setup(c => c.GenerateResponseAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync("docs");
+        _chatClientMock.Setup(c => c.GenerateStructuredResponseAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Type>()))
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
 
         await _sut.GenerateDocumentationAsync(files, DocumentationType.ApiFlow, "csharp");
 

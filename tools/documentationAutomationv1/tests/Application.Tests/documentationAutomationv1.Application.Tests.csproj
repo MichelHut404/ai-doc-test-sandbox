@@ -20,6 +20,8 @@
     <Using Include="Moq" />
     <Using Include="documentationAutomationv1.Application.Interfaces" />
     <Using Include="documentationAutomationv1.Application.Orchestrators" />
+    <Using Include="documentationAutomationv1.Application.DTOs" />
+    <Using Include="src.Application.Services.PromptBuilders" />
     <Using Include="src.Domain.ValueObjects" />
   </ItemGroup>
 

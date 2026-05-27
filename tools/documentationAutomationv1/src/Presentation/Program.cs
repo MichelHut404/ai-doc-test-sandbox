@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using src.Infrastructure;
 using src.Infrastructure.Services;
 using src.Application.Services.PromptBuilders;
+using Microsoft.Extensions.Logging;
 
 var configuration = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
@@ -27,6 +28,11 @@ services.AddScoped<IAiDocumentationService>(sp =>
     new AiDocumentationService(
         sp.GetRequiredService<IChatClient>(),
         sp.GetServices<IPromptBuilder>()));
+services.AddLogging(builder =>
+{
+    builder.AddConsole();
+    builder.SetMinimumLevel(LogLevel.Information);
+});
 services.AddScoped<ICodeAnalysisService, CodeAnalysisService>();
 services.AddScoped<ISettingsService, SettingsService>();
 services.AddScoped<IProcessRunner, CmdProcessRunner>();

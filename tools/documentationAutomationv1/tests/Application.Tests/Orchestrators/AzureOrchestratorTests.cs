@@ -1,5 +1,4 @@
 using src.Application.DTOs;
-using src.Domain.ValueObjects;
 
 namespace documentationAutomationv1.Application.Tests.Orchestrators;
 
@@ -30,6 +29,7 @@ public class AzureOrchestratorTests
     public async Task RunAsync_WhenNoChangedFilesMatchExtension_SkipsDocumentationGeneration()
     {
         _settingsMock.Setup(s => s.LoadSettings()).Returns(DefaultSettings("cs"));
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync("main");
         _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync("docs/main");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
         _gitMock.Setup(g => g.GetChangedFilesAsync()).ReturnsAsync(new[] { "file.js", "file.txt" });
@@ -45,6 +45,7 @@ public class AzureOrchestratorTests
     public async Task RunAsync_WhenChangedFilesListIsEmpty_SkipsDocumentationGeneration()
     {
         _settingsMock.Setup(s => s.LoadSettings()).Returns(DefaultSettings());
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync("main");
         _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync("docs/main");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
         _gitMock.Setup(g => g.GetChangedFilesAsync()).ReturnsAsync(Enumerable.Empty<string>());
@@ -63,6 +64,7 @@ public class AzureOrchestratorTests
         var settings = DefaultSettings("cs");
         _settingsMock.Setup(s => s.LoadSettings()).Returns(settings);
         _settingsMock.Setup(s => s.IsExcluded(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync("feature");
         _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync("docs/feature");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
 
@@ -73,7 +75,7 @@ public class AzureOrchestratorTests
         _codeAnalysisMock.Setup(c => c.AnalyzeAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(new[] { new FileContent(csFile, "public class Foo {}") });
         _aiMock.Setup(a => a.GenerateDocumentationAsync(It.IsAny<IEnumerable<FileContent>>(), It.IsAny<DocumentationType>(), It.IsAny<string>()))
-            .ReturnsAsync("# Doc");
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
         _gitMock.Setup(g => g.CommitAndPushAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _gitMock.Setup(g => g.CreatePullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
@@ -90,6 +92,7 @@ public class AzureOrchestratorTests
         var settings = DefaultSettings("cs");
         _settingsMock.Setup(s => s.LoadSettings()).Returns(settings);
         _settingsMock.Setup(s => s.IsExcluded(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync("feature");
         _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync("docs/feature");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
 
@@ -100,7 +103,7 @@ public class AzureOrchestratorTests
         _codeAnalysisMock.Setup(c => c.AnalyzeAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(new[] { new FileContent(csFile, "public class Foo {}") });
         _aiMock.Setup(a => a.GenerateDocumentationAsync(It.IsAny<IEnumerable<FileContent>>(), It.IsAny<DocumentationType>(), It.IsAny<string>()))
-            .ReturnsAsync("# Doc");
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
         _gitMock.Setup(g => g.CommitAndPushAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _gitMock.Setup(g => g.CreatePullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
@@ -118,6 +121,7 @@ public class AzureOrchestratorTests
         var settings = DefaultSettings("cs");
         _settingsMock.Setup(s => s.LoadSettings()).Returns(settings);
         _settingsMock.Setup(s => s.IsExcluded(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(false);
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync("main");
         _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync("docs/main");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
 
@@ -129,7 +133,7 @@ public class AzureOrchestratorTests
         _codeAnalysisMock.Setup(c => c.AnalyzeAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(new[] { new FileContent(csFile, "public class Foo : IFoo { [HttpGet] void Get(){} }") });
         _aiMock.Setup(a => a.GenerateDocumentationAsync(It.IsAny<IEnumerable<FileContent>>(), It.IsAny<DocumentationType>(), It.IsAny<string>()))
-            .ReturnsAsync("# Doc");
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
         _gitMock.Setup(g => g.CommitAndPushAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _gitMock.Setup(g => g.CreatePullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
@@ -137,7 +141,7 @@ public class AzureOrchestratorTests
 
         // 3 types × 1 file = 3 calls
         _aiMock.Verify(a => a.GenerateDocumentationAsync(It.IsAny<IEnumerable<FileContent>>(), It.IsAny<DocumentationType>(), It.IsAny<string>()), Times.Exactly(3));
-        _markdownMock.Verify(m => m.WriteAsync(It.IsAny<string>(), It.IsAny<DocumentationType>()), Times.Exactly(3));
+        _markdownMock.Verify(m => m.WriteAsync(It.IsAny<IDocumentationOutput>(), It.IsAny<DocumentationType>()), Times.Exactly(3));
 
         File.Delete(csFile);
     }
@@ -150,6 +154,7 @@ public class AzureOrchestratorTests
         var settings = new DocSettings { languageFileExtension = "cs", Exclude = new List<string> { "excluded/" } };
         _settingsMock.Setup(s => s.LoadSettings()).Returns(settings);
         _settingsMock.Setup(s => s.IsExcluded(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync("main");
         _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync("docs/main");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
 
@@ -164,18 +169,19 @@ public class AzureOrchestratorTests
         File.Delete(csFile);
     }
 
-    // --- PR title: branch name trimming ---
+    // --- PR title: target branch comes from GetCurrentBranchAsync ---
 
     [Theory]
-    [InlineData("docs/feature-x", "feature-x")]
-    [InlineData("docs/main", "main")]
-    [InlineData("other/branch", "other/branch")]
-    public async Task RunAsync_PullRequestTitle_ContainsCorrectTargetBranch(string docBranch, string expectedTarget)
+    [InlineData("main")]
+    [InlineData("feature/my-feature")]
+    [InlineData("release/v2")]
+    public async Task RunAsync_PullRequestTitle_ContainsCorrectTargetBranch(string currentBranch)
     {
         var settings = DefaultSettings("cs");
         _settingsMock.Setup(s => s.LoadSettings()).Returns(settings);
         _settingsMock.Setup(s => s.IsExcluded(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync(docBranch);
+        _gitMock.Setup(g => g.GetCurrentBranchAsync()).ReturnsAsync(currentBranch);
+        _gitMock.Setup(g => g.CreateShadowDocBranchAsync()).ReturnsAsync($"docs/{currentBranch}/20260101_000000");
         _gitMock.Setup(g => g.GetRepoRootAsync()).ReturnsAsync("C:/repo/");
 
         var csFile = Path.GetTempFileName() + ".cs";
@@ -184,13 +190,13 @@ public class AzureOrchestratorTests
         _codeAnalysisMock.Setup(c => c.AnalyzeAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(new[] { new FileContent(csFile, "class Foo {}") });
         _aiMock.Setup(a => a.GenerateDocumentationAsync(It.IsAny<IEnumerable<FileContent>>(), It.IsAny<DocumentationType>(), It.IsAny<string>()))
-            .ReturnsAsync("# Doc");
+            .ReturnsAsync(Mock.Of<IDocumentationOutput>());
         _gitMock.Setup(g => g.CommitAndPushAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _gitMock.Setup(g => g.CreatePullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
         await CreateSut().RunAsync();
 
-        _gitMock.Verify(g => g.CreatePullRequestAsync(docBranch, expectedTarget, It.Is<string>(t => t.Contains(expectedTarget))), Times.Once);
+        _gitMock.Verify(g => g.CreatePullRequestAsync(It.IsAny<string>(), currentBranch, It.Is<string>(t => t.Contains(currentBranch))), Times.Once);
 
         File.Delete(csFile);
     }

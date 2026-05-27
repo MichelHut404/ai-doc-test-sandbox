@@ -1,3 +1,8 @@
+using System.ClientModel.Primitives;
+using System.Net;
+using System.Net.Http.Headers;
+using Azure.AI.OpenAI;
+using documentationAutomationv1.Application.DTOs;
 using src.Infrastructure.Interfaces;
 using src.Infrastructure.Services;
 
@@ -77,4 +82,67 @@ public class AzureChatClientTests
         await Assert.ThrowsAnyAsync<Exception>(() =>
             client.GenerateResponseAsync("system prompt", "user message"));
     }
+
+    // ── GenerateStructuredResponseAsync ──────────────────────────────────────
+
+    // Verifieert dat GenerateStructuredResponseAsync een exception gooit wanneer het endpoint niet bereikbaar is.
+    [Fact]
+    public async Task GenerateStructuredResponseAsync_WithUnreachableEndpoint_ThrowsException()
+    {
+        var client = new AzureChatClient(ValidApiKey, "https://localhost:1/", ValidDeploymentName);
+
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            client.GenerateStructuredResponseAsync("system", "user", typeof(ClassMethodDocumentation)));
+    }
+
+    // Verifieert dat GenerateStructuredResponseAsync het juiste IDocumentationOutput-object retourneert
+    // wanneer de API een geldig JSON-antwoord teruggeeft.
+    // De TransformSchemaNode-lambda wordt gedekt via het 'object'-knooppunt (true-branch)
+    // én via string-knooppunten (false-branch) in het schema van ClassMethodDocumentation.
+    [Fact]
+    public async Task GenerateStructuredResponseAsync_WithValidResponse_ReturnsDeserializedOutput()
+    {
+        // content is a JSON string value — inner quotes must be JSON-escaped so the outer
+        // response body is valid JSON. Raw string literals preserve backslashes literally,
+        // so `\"` here becomes the two characters \ and " which JSON parsers treat as an
+        // escaped double-quote inside a string value.
+        const string apiResponseJson = """
+            {
+              "id": "chatcmpl-test",
+              "object": "chat.completion",
+              "created": 1718591579,
+              "model": "gpt-4o",
+              "choices": [{
+                "index": 0,
+                "message": { "role": "assistant", "content": "{\"FileName\":\"Test.cs\",\"FileDescription\":\"A test file\",\"Classes\":[]}" },
+                "finish_reason": "stop"
+              }],
+              "usage": { "prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30 }
+            }
+            """;
+
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(apiResponseJson)
+        };
+        httpResponse.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        var options = new AzureOpenAIClientOptions(AzureOpenAIClientOptions.ServiceVersion.V2024_10_21);
+        options.Transport = new HttpClientPipelineTransport(new HttpClient(new MockHttpMessageHandler(httpResponse)));
+
+        var client = new AzureChatClient(ValidApiKey, ValidEndpoint, ValidDeploymentName, options);
+
+        var result = await client.GenerateStructuredResponseAsync("system", "user", typeof(ClassMethodDocumentation));
+
+        var doc = Assert.IsType<ClassMethodDocumentation>(result);
+        Assert.Equal("Test.cs", doc.FileName);
+        Assert.Equal("A test file", doc.FileDescription);
+        Assert.Empty(doc.Classes);
+    }
+}
+
+internal sealed class MockHttpMessageHandler(HttpResponseMessage response) : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        => Task.FromResult(response);
 }

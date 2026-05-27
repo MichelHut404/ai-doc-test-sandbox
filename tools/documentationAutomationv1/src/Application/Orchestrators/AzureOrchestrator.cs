@@ -1,4 +1,5 @@
 using documentationAutomationv1.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 namespace documentationAutomationv1.Application.Orchestrators;
 
 public class AzureOrchestrator : BaseOrchestrator
@@ -9,8 +10,9 @@ public class AzureOrchestrator : BaseOrchestrator
         ICodeAnalysisService codeAnalysisService,
         IGitService gitService,
         IMarkdownWriterService markdownWriterService,
-        ISettingsService settingsService)
-        : base(aiDocumentationService, codeAnalysisService, gitService, markdownWriterService)
+        ISettingsService settingsService,
+        ILogger<AzureOrchestrator> logger)
+        : base(aiDocumentationService, codeAnalysisService, gitService, markdownWriterService, logger)
     {
         SettingsService = settingsService;
     }
@@ -18,24 +20,24 @@ public class AzureOrchestrator : BaseOrchestrator
 
     public override async Task RunAsync()
     {
-        Console.WriteLine("[docs] Starting documentation generation...");
+        Logger.LogInformation("Starting documentation generation...");
 
-        Console.WriteLine("[docs] Loading settings from docsettings.json...");
+        Logger.LogInformation("Loading settings from docsettings.json...");
         var settings = SettingsService.LoadSettings();
         
-        Console.WriteLine($"[docs] Language extension: .{settings.languageFileExtension}");
-        Console.WriteLine($"[docs] Exclude: {(settings.Exclude.Count == 0 ? "(none)" : string.Join(", ", settings.Exclude))}");
+        Logger.LogInformation("Language extension: .{LanguageExtension}", settings.languageFileExtension);
+        Logger.LogInformation("Exclude: {Exclude}", settings.Exclude.Count == 0 ? "(none)" : string.Join(", ", settings.Exclude));
 
-        Console.WriteLine("[docs] Creating shadow doc branch...");
+        Logger.LogInformation("Creating shadow doc branch...");
+        var targetBranch = (await GitService.GetCurrentBranchAsync()).Trim();
         var docBranch = await GitService.CreateShadowDocBranchAsync();
-        var targetBranch = docBranch.StartsWith("docs/") ? docBranch["docs/".Length..] : docBranch;
-        Console.WriteLine($"[docs] Doc branch: {docBranch} → target: {targetBranch}");
+        Logger.LogInformation("Doc branch: {DocBranch} → target: {TargetBranch}", docBranch, targetBranch);
 
         var toolRoot = FindToolRoot();
         var gitRoot = await GitService.GetRepoRootAsync();
-        Console.WriteLine($"[docs] Git root: {gitRoot}");
+        Logger.LogInformation("Git root: {GitRoot}", gitRoot);
 
-        Console.WriteLine("[docs] Fetching changed files...");
+        Logger.LogInformation("Fetching changed files...");
         var changedFiles = (await GitService.GetChangedFilesAsync())
             .Where(f => f.EndsWith($".{settings.languageFileExtension}", StringComparison.OrdinalIgnoreCase))
             .Where(f => toolRoot == null || !f.StartsWith(toolRoot, StringComparison.OrdinalIgnoreCase))
@@ -45,39 +47,39 @@ public class AzureOrchestrator : BaseOrchestrator
 
         if (changedFiles.Count == 0)
         {
-            Console.WriteLine("[docs] No changed files to document. Skipping.");
+            Logger.LogWarning("No changed files to document. Skipping.");
             return;
         }
 
-        Console.WriteLine($"[docs] {changedFiles.Count} file(s) to document:");
+        Logger.LogInformation("{FileCount} file(s) to document:", changedFiles.Count);
         foreach (var file in changedFiles)
-            Console.WriteLine($"[docs]   → {file}");
+            Logger.LogInformation("  → {File}", file);
 
-        Console.WriteLine("[docs] Analyzing file contents...");
+        Logger.LogInformation("Analyzing file contents...");
         var allFileContents = await CodeAnalysisService.AnalyzeAsync(changedFiles);
 
         foreach (var fileContent in allFileContents)
         {
             var types = DetermineDocumentationTypes(fileContent.Content).ToList();
-            Console.WriteLine($"[docs] Generating documentation for: {fileContent.FileName} ({string.Join(", ", types)})");
+            Logger.LogInformation("Generating documentation for: {FileName} ({Types})", fileContent.FileName, string.Join(", ", types));
 
             foreach (var type in types)
             {
-                Console.WriteLine($"[docs]   Generating {type}...");
+                Logger.LogInformation("  Generating {Type}...", type);
                 var doc = await AiDocumentationService.GenerateDocumentationAsync(new[] { fileContent }, type, settings.languageFileExtension);
-                Console.WriteLine($"[docs]   Writing {type} to disk...");
+                Logger.LogInformation("  Writing {Type} to disk...", type);
                 await MarkdownWriterService.WriteAsync(doc, type);
             }
         }
 
-        Console.WriteLine("[docs] Committing and pushing documentation...");
+        Logger.LogInformation("Committing and pushing documentation...");
         await GitService.CommitAndPushAsync("docs: auto-generated documentation for changed files: " + string.Join(", ", changedFiles.Select(Path.GetFileName)));
 
         var prTitle = $"docs: auto-generated documentation for {targetBranch}";
-        Console.WriteLine($"[docs] Creating pull request: \"{prTitle}\"...");
+        Logger.LogInformation("Creating pull request: \"{PrTitle}\"...", prTitle);
         await GitService.CreatePullRequestAsync(docBranch, targetBranch, prTitle);
 
-        Console.WriteLine("[docs] Done.");
+        Logger.LogInformation("Done.");
     }
 
 }

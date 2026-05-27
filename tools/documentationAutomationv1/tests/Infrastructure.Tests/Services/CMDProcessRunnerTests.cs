@@ -4,7 +4,7 @@ namespace documentationAutomationv1.Infrastructure.Tests.Services;
 
 public class CMDProcessRunnerTests
 {
-    private readonly CMDProcessRunner _sut = new();
+    private readonly CmdProcessRunner _sut = new();
 
     // ── RunAsync ──────────────────────────────────────────────────────────────
 

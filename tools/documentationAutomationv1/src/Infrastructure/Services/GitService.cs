@@ -16,6 +16,11 @@ public class GitService : IGitService
         return (await _processRunner.RunAsync("git", "rev-parse --show-toplevel")).Trim();
     }
 
+    public async Task<string> GetCurrentBranchAsync()
+    {
+        return (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
+    }
+
     public async Task<IEnumerable<string>> GetChangedFilesAsync()
     {
         var repoRoot = (await _processRunner.RunAsync("git", "rev-parse --show-toplevel")).Trim();
@@ -34,7 +39,7 @@ public class GitService : IGitService
     public async Task<string> CreateShadowDocBranchAsync()
     {
         var currentBranch = (await _processRunner.RunAsync("git", "rev-parse --abbrev-ref HEAD")).Trim();
-        var shadowBranch = $"docs/{currentBranch}";
+        var shadowBranch = $"docs/{currentBranch}/{DateTime.Now:yyyyMMdd_HHmmss}";
 
         var localBranchExists = await _processRunner.RunAsync("git", $"branch --list {shadowBranch}");
         var remoteBranchExists = await _processRunner.RunAsync("git", $"ls-remote --heads origin {shadowBranch}");
