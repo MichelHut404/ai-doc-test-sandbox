@@ -10,7 +10,7 @@ public class testClass
         // prints info
         Console.WriteLine($"Name: {name}, Age: {age}");
     }
-    public void testMethod()
+    public void testMethod123()
     {
         // does something
         Console.WriteLine("This is a test method.");
