@@ -68,7 +68,8 @@ public class AzureOrchestrator : BaseOrchestrator
                 Logger.LogInformation("  Generating {Type}...", type);
                 var doc = await AiDocumentationService.GenerateDocumentationAsync(new[] { fileContent }, type, settings.languageFileExtension);
                 Logger.LogInformation("  Writing {Type} to disk...", type);
-                await MarkdownWriterService.WriteAsync(doc, type);
+                var filename = Path.GetFileNameWithoutExtension(fileContent.FileName);
+                await MarkdownWriterService.WriteAsync(doc, type, filename);
             }
         }
 

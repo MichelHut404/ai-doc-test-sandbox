@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using src.Domain.ValueObjects;
 
 namespace documentationAutomationv1.Application.Tests.Orchestrators;
@@ -9,8 +10,9 @@ public class BaseOrchestratorTests
             IAiDocumentationService aiDocumentationService,
             ICodeAnalysisService codeAnalysisService,
             IGitService gitService,
-            IMarkdownWriterService markdownWriterService)
-            : base(aiDocumentationService, codeAnalysisService, gitService, markdownWriterService)
+            IMarkdownWriterService markdownWriterService,
+            ILogger logger)
+            : base(aiDocumentationService, codeAnalysisService, gitService, markdownWriterService, logger)
         {
         }
 
@@ -32,12 +34,14 @@ public class BaseOrchestratorTests
     private readonly Mock<ICodeAnalysisService> _codeAnalysisServiceMock = new();
     private readonly Mock<IGitService> _gitServiceMock = new();
     private readonly Mock<IMarkdownWriterService> _markdownWriterServiceMock = new();
+    private readonly Mock<ILogger> _loggerMock = new();
 
     private TestOrchestrator CreateSut() => new(
         _aiDocumentationServiceMock.Object,
         _codeAnalysisServiceMock.Object,
         _gitServiceMock.Object,
-        _markdownWriterServiceMock.Object);
+        _markdownWriterServiceMock.Object,
+        _loggerMock.Object);
 
     // --- Constructor ---
 

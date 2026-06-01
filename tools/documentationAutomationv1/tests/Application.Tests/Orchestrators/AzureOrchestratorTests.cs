@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using src.Application.DTOs;
 
 namespace documentationAutomationv1.Application.Tests.Orchestrators;
@@ -9,13 +10,15 @@ public class AzureOrchestratorTests
     private readonly Mock<IGitService> _gitMock = new();
     private readonly Mock<IMarkdownWriterService> _markdownMock = new();
     private readonly Mock<ISettingsService> _settingsMock = new();
+    private readonly Mock<ILogger<AzureOrchestrator>> _loggerMock = new();
 
     private AzureOrchestrator CreateSut() => new(
         _aiMock.Object,
         _codeAnalysisMock.Object,
         _gitMock.Object,
         _markdownMock.Object,
-        _settingsMock.Object);
+        _settingsMock.Object,
+        _loggerMock.Object);
 
     private static DocSettings DefaultSettings(string ext = "cs") => new()
     {
@@ -141,7 +144,7 @@ public class AzureOrchestratorTests
 
         // 3 types × 1 file = 3 calls
         _aiMock.Verify(a => a.GenerateDocumentationAsync(It.IsAny<IEnumerable<FileContent>>(), It.IsAny<DocumentationType>(), It.IsAny<string>()), Times.Exactly(3));
-        _markdownMock.Verify(m => m.WriteAsync(It.IsAny<IDocumentationOutput>(), It.IsAny<DocumentationType>()), Times.Exactly(3));
+        _markdownMock.Verify(m => m.WriteAsync(It.IsAny<IDocumentationOutput>(), It.IsAny<DocumentationType>(), It.IsAny<string>()), Times.Exactly(3));
 
         File.Delete(csFile);
     }

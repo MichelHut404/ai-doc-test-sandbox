@@ -13,7 +13,9 @@ public class ApiFlowPromptBuilder : IPromptBuilder
     public string Build(string filesSections) => $"""
         Generate API flow documentation in English for the following C# files.
         Describe the API endpoints, their inputs, outputs, and interactions.
-        Make sure to write it in markdown format, with code snippets where relevant.
+        Make sure to write it in markdown format.
+        Use only plain markdown: headings, bullet points, bold, code blocks, and tables.
+        Plain text only — no HTML tags and no underline syntax.
 
         {filesSections}
         """;

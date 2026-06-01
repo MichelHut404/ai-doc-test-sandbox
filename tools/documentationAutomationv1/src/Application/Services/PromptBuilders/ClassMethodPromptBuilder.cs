@@ -13,7 +13,9 @@ public class ClassMethodPromptBuilder : IPromptBuilder
         Generate clear technical documentation in English for the following C# files.
         Describe per file what it does, which classes it contains and what those classes do.
         For each class, describe all methods including their purpose, parameters, and return values.
-        Make sure to write it in markdown format, with code snippets where relevant.
+        Make sure to write it in markdown format.
+        Use only plain markdown: headings, bullet points, bold, code blocks, and tables.
+        Plain text only — no HTML tags and no underline syntax.
 
         {filesSections}
         """;

@@ -1,7 +1,7 @@
 # IAnimal
 
 This is an interface that determines what the class that uses the interface needs to implement.
-
+ 
 ## Properties
 
 - `string Name`: The name of the animal.

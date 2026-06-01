@@ -12,7 +12,9 @@ public class RelationshipPromptBuilder : IPromptBuilder
     public string Build(string filesSections) => $"""
         Generate documentation in English for the following C# files, focusing on class and interface relationships.
         Describe inheritance, implementations, and associations.
-        Make sure to write it in markdown format, with code snippets where relevant.
+        Make sure to write it in markdown format.
+        Use only plain markdown: headings, bullet points, bold, code blocks, and tables.
+        Plain text only — no HTML tags and no underline syntax.
 
         {filesSections}
         """;

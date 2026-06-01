@@ -1,0 +1,8 @@
+{
+  "languagefileextension": "cs",
+  "exclude": [
+    "**/*.Designer.cs",
+    "tests/**",
+    "**/TestIgonore.cs"
+  ]
+}

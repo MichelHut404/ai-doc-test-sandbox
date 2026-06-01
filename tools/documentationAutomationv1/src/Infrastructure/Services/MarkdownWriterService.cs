@@ -13,7 +13,7 @@ public class MarkdownWriterService : IMarkdownWriterService
         _basePath = basePath ?? "Documentation__BasePath";
     }
 
-    public async Task WriteAsync(IDocumentationOutput content, DocumentationType documentationType)
+    public async Task WriteAsync(IDocumentationOutput content, DocumentationType documentationType, string filename)
     {
         if (content == null)
             throw new ArgumentNullException(nameof(content), "Content may not be null.");
@@ -26,7 +26,7 @@ public class MarkdownWriterService : IMarkdownWriterService
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        var fileName = $"documentation_{DateTime.Now:yyyyMMdd_HHmmss}.md";
+        var fileName = $"{filename}_{DateTime.Now:yyyyMMdd_HHmmss}.md";
         string subFolder = documentationType switch
         {
             DocumentationType.ClassDescriptionAndMethodDescription => "ClassMethodDocumentation",

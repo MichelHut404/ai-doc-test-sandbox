@@ -25,7 +25,7 @@ public class MarkdownWriterServiceTests : IDisposable
     public async Task WriteAsync_ClassMethodType_CreatesFileInClassMethodDocumentationFolder()
     {
         var content = new ClassMethodDocumentation("test.cs", "desc", new List<ClassDoc>());
-        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var files = Directory.GetFiles(Path.Combine(_tempBasePath, "ClassMethodDocumentation"));
         Assert.Single(files);
@@ -35,7 +35,7 @@ public class MarkdownWriterServiceTests : IDisposable
     public async Task WriteAsync_ApiFlowType_CreatesFileInApiFlowDocumentationFolder()
     {
         var content = new ApiFlowDocumentation("summary", new List<EndpointDoc>());
-        await _sut.WriteAsync(content, DocumentationType.ApiFlow);
+        await _sut.WriteAsync(content, DocumentationType.ApiFlow, "test");
 
         var files = Directory.GetFiles(Path.Combine(_tempBasePath, "ApiFlowDocumentation"));
         Assert.Single(files);
@@ -45,7 +45,7 @@ public class MarkdownWriterServiceTests : IDisposable
     public async Task WriteAsync_RelationshipType_CreatesFileInRelationshipDocumentationFolder()
     {
         var content = new RelationshipDocumentation("summary", new List<RelationshipDoc>());
-        await _sut.WriteAsync(content, DocumentationType.Relationship);
+        await _sut.WriteAsync(content, DocumentationType.Relationship, "test");
 
         var files = Directory.GetFiles(Path.Combine(_tempBasePath, "RelationshipDocumentation"));
         Assert.Single(files);
@@ -56,7 +56,7 @@ public class MarkdownWriterServiceTests : IDisposable
     {
         var content = new ApiFlowDocumentation("My API summary", new List<EndpointDoc>());
 
-        await _sut.WriteAsync(content, DocumentationType.ApiFlow);
+        await _sut.WriteAsync(content, DocumentationType.ApiFlow, "test");
 
         var filePath = Directory.GetFiles(Path.Combine(_tempBasePath, "ApiFlowDocumentation")).Single();
         var actualContent = await File.ReadAllTextAsync(filePath);
@@ -69,7 +69,7 @@ public class MarkdownWriterServiceTests : IDisposable
         var content = new ClassMethodDocumentation("test.cs", "desc", new List<ClassDoc>());
         Assert.False(Directory.Exists(Path.Combine(_tempBasePath, "ClassMethodDocumentation")));
 
-        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         Assert.True(Directory.Exists(Path.Combine(_tempBasePath, "ClassMethodDocumentation")));
     }
@@ -78,7 +78,7 @@ public class MarkdownWriterServiceTests : IDisposable
     public async Task WriteAsync_FileName_HasCorrectFormat()
     {
         var content = new RelationshipDocumentation("summary", new List<RelationshipDoc>());
-        await _sut.WriteAsync(content, DocumentationType.Relationship);
+        await _sut.WriteAsync(content, DocumentationType.Relationship, "documentation");
 
         var filePath = Directory.GetFiles(Path.Combine(_tempBasePath, "RelationshipDocumentation")).Single();
         var fileName = Path.GetFileName(filePath);
@@ -92,14 +92,14 @@ public class MarkdownWriterServiceTests : IDisposable
         var unknownType = (DocumentationType)999;
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-            _sut.WriteAsync(content, unknownType));
+            _sut.WriteAsync(content, unknownType, "test"));
     }
 
     [Fact]
     public async Task WriteAsync_NullContent_ThrowsArgumentNullException()
     {
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _sut.WriteAsync(null!, DocumentationType.ApiFlow));
+            _sut.WriteAsync(null!, DocumentationType.ApiFlow, "test"));
     }
 
     [Fact]
@@ -112,10 +112,10 @@ public class MarkdownWriterServiceTests : IDisposable
         var content = new ApiFlowDocumentation("summary", new List<EndpointDoc>());
 
         await Assert.ThrowsAsync<IOException>(() =>
-            _sut.WriteAsync(content, DocumentationType.ApiFlow));
+            _sut.WriteAsync(content, DocumentationType.ApiFlow, "test"));
     }
 
-    // ── ConvertClassMethod ────────────────────────────────────────────────────
+    // â”€â”€ ConvertClassMethod â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     // Verifieert dat de bestandsnaam en beschrijving worden geschreven als header.
     [Fact]
@@ -123,7 +123,7 @@ public class MarkdownWriterServiceTests : IDisposable
     {
         var content = new ClassMethodDocumentation("MyFile.cs", "This is my file.", new List<ClassDoc>());
 
-        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var fileContent = await ReadSingleFileAsync("ClassMethodDocumentation");
         Assert.Contains("# MyFile.cs", fileContent);
@@ -137,7 +137,7 @@ public class MarkdownWriterServiceTests : IDisposable
         var cls = new ClassDoc("MyClass", "A test class.", new List<MethodDoc>());
         var content = new ClassMethodDocumentation("MyFile.cs", "desc", new List<ClassDoc> { cls });
 
-        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var fileContent = await ReadSingleFileAsync("ClassMethodDocumentation");
         Assert.Contains("## MyClass", fileContent);
@@ -153,7 +153,7 @@ public class MarkdownWriterServiceTests : IDisposable
         var cls = new ClassDoc("MyClass", "desc", new List<MethodDoc> { method });
         var content = new ClassMethodDocumentation("MyFile.cs", "desc", new List<ClassDoc> { cls });
 
-        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var fileContent = await ReadSingleFileAsync("ClassMethodDocumentation");
         Assert.Contains("### `void DoWork(string input)`", fileContent);
@@ -162,7 +162,7 @@ public class MarkdownWriterServiceTests : IDisposable
         Assert.Contains("**Returns**: void", fileContent);
     }
 
-    // ── ConvertApiFlow ────────────────────────────────────────────────────────
+    // â”€â”€ ConvertApiFlow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     // Verifieert dat het API-flow-header en de samenvatting worden geschreven.
     [Fact]
@@ -170,7 +170,7 @@ public class MarkdownWriterServiceTests : IDisposable
     {
         var content = new ApiFlowDocumentation("Overall API summary.", new List<EndpointDoc>());
 
-        await _sut.WriteAsync(content, DocumentationType.ApiFlow);
+        await _sut.WriteAsync(content, DocumentationType.ApiFlow, "test");
 
         var fileContent = await ReadSingleFileAsync("ApiFlowDocumentation");
         Assert.Contains("# API Flow", fileContent);
@@ -184,7 +184,7 @@ public class MarkdownWriterServiceTests : IDisposable
         var endpoint = new EndpointDoc("GET", "/api/items", "Get all items.", "none", "List<Item>");
         var content = new ApiFlowDocumentation("summary", new List<EndpointDoc> { endpoint });
 
-        await _sut.WriteAsync(content, DocumentationType.ApiFlow);
+        await _sut.WriteAsync(content, DocumentationType.ApiFlow, "test");
 
         var fileContent = await ReadSingleFileAsync("ApiFlowDocumentation");
         Assert.Contains("## `GET /api/items`", fileContent);
@@ -193,7 +193,7 @@ public class MarkdownWriterServiceTests : IDisposable
         Assert.Contains("**Output**: List<Item>", fileContent);
     }
 
-    // ── ConvertRelationship ───────────────────────────────────────────────────
+    // â”€â”€ ConvertRelationship â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     // Verifieert dat het relationship-header en de samenvatting worden geschreven.
     [Fact]
@@ -201,7 +201,7 @@ public class MarkdownWriterServiceTests : IDisposable
     {
         var content = new RelationshipDocumentation("Overall relationship summary.", new List<RelationshipDoc>());
 
-        await _sut.WriteAsync(content, DocumentationType.Relationship);
+        await _sut.WriteAsync(content, DocumentationType.Relationship, "test");
 
         var fileContent = await ReadSingleFileAsync("RelationshipDocumentation");
         Assert.Contains("# Relationships", fileContent);
@@ -216,7 +216,7 @@ public class MarkdownWriterServiceTests : IDisposable
         var rel = new RelationshipDoc("MyClass", "BaseClass", new List<string> { "IFoo", "IBar" }, new List<string> { "ServiceA", "ServiceB" });
         var content = new RelationshipDocumentation("summary", new List<RelationshipDoc> { rel });
 
-        await _sut.WriteAsync(content, DocumentationType.Relationship);
+        await _sut.WriteAsync(content, DocumentationType.Relationship, "test");
 
         var fileContent = await ReadSingleFileAsync("RelationshipDocumentation");
         Assert.Contains("## MyClass", fileContent);
@@ -225,7 +225,7 @@ public class MarkdownWriterServiceTests : IDisposable
         Assert.Contains("**Uses**: ServiceA, ServiceB", fileContent);
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────────
+    // â”€â”€ Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private async Task<string> ReadSingleFileAsync(string subFolder)
     {

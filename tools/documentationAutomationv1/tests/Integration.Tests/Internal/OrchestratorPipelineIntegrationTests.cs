@@ -8,7 +8,7 @@ using src.Infrastructure.Services;
 namespace documentationAutomationv1.Integration.Tests.Internal;
 
 /// Integratie tests voor de volledige documentatie pipeline:
-/// AzureOrchestrator → AiDocumentationService → PromptBuilders → mock IChatClient.
+/// AzureOrchestrator â†’ AiDocumentationService â†’ PromptBuilders â†’ mock IChatClient.
 /// Git, MarkdownWriter en CodeAnalysis worden gemockt zodat alleen de interne koppeling getest wordt.
 public class OrchestratorPipelineIntegrationTests
 {
@@ -124,7 +124,7 @@ public class OrchestratorPipelineIntegrationTests
 
         await CreateSut().RunAsync();
 
-        _markdownMock.Verify(m => m.WriteAsync(expectedDoc, DocumentationType.ClassDescriptionAndMethodDescription), Times.Once);
+        _markdownMock.Verify(m => m.WriteAsync(expectedDoc, DocumentationType.ClassDescriptionAndMethodDescription, It.IsAny<string>()), Times.Once);
     }
 
     // Git retourneert een lege lijst met gewijzigde bestanden.
@@ -142,8 +142,7 @@ public class OrchestratorPipelineIntegrationTests
 
         _chatClientMock.Verify(c => c.GenerateStructuredResponseAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Type>()), Times.Never);
-        _markdownMock.Verify(m => m.WriteAsync(
-            It.IsAny<IDocumentationOutput>(), It.IsAny<DocumentationType>()), Times.Never);
+        _markdownMock.Verify(m => m.WriteAsync(It.IsAny<IDocumentationOutput>(), It.IsAny<DocumentationType>(), It.IsAny<string>()), Times.Never);
     }
 
     private static string CreateTempFile(string fileName, string content)

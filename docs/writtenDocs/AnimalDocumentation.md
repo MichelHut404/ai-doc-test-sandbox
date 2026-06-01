@@ -7,7 +7,7 @@ This class defines an animal. It implements the `IAnimal` interface and contains
 - `string Name`: Defines the animal's name.
 - `string Species`: Defines the animal's species.
 - `int Age`: Defines the animal's age.
-
+ 
 ## Private Fields
 
 - `string _sound`: What kind of sound the animal makes.

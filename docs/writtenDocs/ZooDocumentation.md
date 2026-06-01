@@ -2,7 +2,7 @@
 
 In this file the zoo is being managed. There are different methods that the zoo needs.
 
-## Private Fields
+## Private Fields 
 
 The file has 2 readonly private variables:
 

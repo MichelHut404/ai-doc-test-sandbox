@@ -16,7 +16,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
     }
 
     // ClassMethodDocumentation wordt weggeschreven naar de echte file system in een temp map.
-    // Verwacht: de submap ClassMethodDocumentation bestaat en bevat precies één bestand.
+    // Verwacht: de submap ClassMethodDocumentation bestaat en bevat precies Ã©Ã©n bestand.
     [Fact]
     public async Task WriteAsync_ClassMethodDocumentation_CreatesFileInCorrectSubfolder()
     {
@@ -25,7 +25,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
             "A test service.",
             [new ClassDoc("MyService", "Handles logic.", [])]);
 
-        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var subfolder = Path.Combine(_basePath, "ClassMethodDocumentation");
         Assert.True(Directory.Exists(subfolder));
@@ -33,7 +33,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
     }
 
     // ApiFlowDocumentation wordt weggeschreven naar de echte file system in een temp map.
-    // Verwacht: de submap ApiFlowDocumentation bestaat en bevat precies één bestand.
+    // Verwacht: de submap ApiFlowDocumentation bestaat en bevat precies Ã©Ã©n bestand.
     [Fact]
     public async Task WriteAsync_ApiFlowDocumentation_CreatesFileInCorrectSubfolder()
     {
@@ -41,7 +41,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
             "Handles order endpoints.",
             [new EndpointDoc("GET", "/orders", "Returns all orders.", "none", "List<Order>")]);
 
-        await _sut.WriteAsync(doc, DocumentationType.ApiFlow);
+        await _sut.WriteAsync(doc, DocumentationType.ApiFlow, "test");
 
         var subfolder = Path.Combine(_basePath, "ApiFlowDocumentation");
         Assert.True(Directory.Exists(subfolder));
@@ -58,7 +58,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
             "Manages orders.",
             []);
 
-        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var file = Directory.GetFiles(Path.Combine(_basePath, "ClassMethodDocumentation")).Single();
         var content = await File.ReadAllTextAsync(file);
@@ -67,15 +67,15 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
     }
 
     // WriteAsync twee keer aangeroepen met een vertraging van 1 seconde (bestandsnaam is op seconden).
-    // Verwacht: er worden twee aparte bestanden aangemaakt, niet één overschreven.
+    // Verwacht: er worden twee aparte bestanden aangemaakt, niet Ã©Ã©n overschreven.
     [Fact]
     public async Task WriteAsync_MultipleWrites_CreatesMultipleFiles()
     {
         var doc = new ClassMethodDocumentation("File.cs", "desc", []);
 
-        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription, "test");
         await Task.Delay(1100); // timestamp in bestandsnaam is op seconden
-        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription);
+        await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 
         var files = Directory.GetFiles(Path.Combine(_basePath, "ClassMethodDocumentation"));
         Assert.Equal(2, files.Length);
@@ -87,7 +87,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
     public async Task WriteAsync_ThrowsArgumentNullException_WhenContentIsNull()
     {
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _sut.WriteAsync(null!, DocumentationType.ClassDescriptionAndMethodDescription));
+            _sut.WriteAsync(null!, DocumentationType.ClassDescriptionAndMethodDescription, "test"));
     }
 
     public void Dispose()
