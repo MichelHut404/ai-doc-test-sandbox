@@ -134,7 +134,7 @@ public class MarkdownWriterServiceTests : IDisposable
     [Fact]
     public async Task WriteAsync_ClassMethod_WithClass_WritesClassSection()
     {
-        var cls = new ClassDoc("MyClass", "A test class.", new List<MethodDoc>());
+        var cls = new ClassDoc("MyClass", "A test class.", new List<VariableDoc>(), new List<MethodDoc>());
         var content = new ClassMethodDocumentation("MyFile.cs", "desc", new List<ClassDoc> { cls });
 
         await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");
@@ -150,7 +150,7 @@ public class MarkdownWriterServiceTests : IDisposable
     {
         var param = new ParameterDoc("input", "string", "The input value.");
         var method = new MethodDoc("void DoWork(string input)", "Does work.", new List<ParameterDoc> { param }, "void");
-        var cls = new ClassDoc("MyClass", "desc", new List<MethodDoc> { method });
+        var cls = new ClassDoc("MyClass", "desc", new List<VariableDoc>(), new List<MethodDoc> { method });
         var content = new ClassMethodDocumentation("MyFile.cs", "desc", new List<ClassDoc> { cls });
 
         await _sut.WriteAsync(content, DocumentationType.ClassDescriptionAndMethodDescription, "test");

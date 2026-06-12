@@ -27,13 +27,17 @@ public class AzureChatClient : IChatClient
 
     public async Task<IDocumentationOutput> GenerateStructuredResponseAsync(string systemMessage, string userMessage, Type outputType)
     {
-       
-       var schemaNode = JsonSchemaExporter.GetJsonSchemaAsNode(
+        // Genereer automatisch een JSON schema op basis van het C# type (bijv. ClassMethodDocumentation).
+        // Dit schema vertelt de AI precies welke velden hij moet invullen.
+        var schemaNode = JsonSchemaExporter.GetJsonSchemaAsNode(
         JsonSerializerOptions.Default,
         outputType,
         new JsonSchemaExporterOptions
         {
+            // zorgt ervoor dat alles word ingevuld. Anders zou de AI alleen de velden invullen die hij "kent" en de rest leeg laten.
             TreatNullObliviousAsNonNullable = true,
+            // Voeg "additionalProperties: false" toe aan elk object in het schema,
+            // zodat de AI geen extra velden mag toevoegen die niet in het record staan.
             TransformSchemaNode = (ctx, node) =>
             {
                 if (node is System.Text.Json.Nodes.JsonObject obj &&
@@ -45,6 +49,8 @@ public class AzureChatClient : IChatClient
             }
         });
 
+        // Stel de response format in op JSON schema modus.
+        // Azure OpenAI garandeert hierdoor dat de respons altijd het opgegeven schema volgt.
         var options = new OpenAI.Chat.ChatCompletionOptions
         {
             ResponseFormat = OpenAI.Chat.ChatResponseFormat.CreateJsonSchemaFormat(
@@ -53,10 +59,12 @@ public class AzureChatClient : IChatClient
                 jsonSchemaIsStrict: true)
         };
 
+        // Stuur de berichten naar de AI en wacht op de respons.
         var response = await _chatClient.CompleteChatAsync(
             [new OpenAI.Chat.SystemChatMessage(systemMessage), new OpenAI.Chat.UserChatMessage(userMessage)],
             options);
 
+        // Zet de JSON-tekst uit de respons om naar het juiste C# object en geef het terug.
         var json = response.Value.Content[0].Text;
         return (IDocumentationOutput)JsonSerializer.Deserialize(json, outputType)!;
     }

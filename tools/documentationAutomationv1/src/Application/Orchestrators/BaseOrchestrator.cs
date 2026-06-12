@@ -41,8 +41,7 @@ public abstract class BaseOrchestrator
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null)
         {
-            //TODO: look at .slnx
-            if (dir.GetFiles("*.sln").Length > 0)
+            if (dir.GetFiles("*.sln").Length > 0 || dir.GetFiles("*.slnx").Length > 0)
                 return dir.FullName + Path.DirectorySeparatorChar;
             dir = dir.Parent;
         }

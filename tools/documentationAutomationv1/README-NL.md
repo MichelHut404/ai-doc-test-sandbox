@@ -33,14 +33,6 @@ De tool leeft in een `tools/`-map in de repository die je wilt documenteren. Maa
     └── documentationAutomationv1
 ```
 
-Kloon de tool-repository in die map en bouw hem:
-
-```bash
-git clone <repository-url>
-cd tools/documentationAutomationv1
-dotnet build
-```
-
 Zodra de tool draait, voert hij automatisch de volgende stappen uit:
 
 1. Laadt `docsettings.json` vanuit de repository root.
@@ -51,6 +43,22 @@ Zodra de tool draait, voert hij automatisch de volgende stappen uit:
 6. Schrijft de documentatie naar `docs/generated/` op de documentatiebranch.
 7. Commit en pusht de documentatiebranch.
 8. Maakt een pull request aan via de GitHub CLI.
+
+---
+
+## Stappenplan: tool werkend krijgen
+
+Hieronder een beknopt overzicht van alles wat je moet doen om de tool volledig werkend te krijgen:
+
+1. **Tool in je repository plaatsen** — Kopieer de `documentationAutomationv1`-map naar `tools/documentationAutomationv1/` in de root van de repository die je wilt documenteren.
+2. **Azure Resource Group aanmaken** — Maak een resourcegroep aan in de [Azure Portal](https://portal.azure.com).
+3. **Azure OpenAI resource aanmaken** — Maak een Azure OpenAI-resource aan in de zojuist gemaakte resourcegroep.
+4. **Azure AI Foundry-project aanmaken** — Maak een project aan op [ai.azure.com](https://ai.azure.com) en koppel het aan de Azure OpenAI-resource.
+5. **Model deployen** — Deploy een model (`gpt-4o-mini` of `gpt-4o`) via **Deployments** in Azure AI Foundry en noteer de deployment name. 
+6. **Endpoint en API-sleutel ophalen** — Kopieer het endpoint en de API-sleutel uit **Keys and Endpoint** in de Azure Portal.
+7. **`docsettings.json` aanmaken** — Maak dit bestand aan in de root van je repository en stel `languagefileextension` en optioneel `exclude` in (zie [Configuratie instellen](#configuratie-instellen)).
+8. **GitHub Secrets aanmaken** — Voeg `OPENAI_APIKEY`, `AZURE_OPENAI_ENDPOINT` en `AZURE_OPENAI_DEPLOYMENTNAME` toe via **Settings → Secrets and variables → Actions** in je GitHub-repository.
+9. **GitHub Actions workflow aanmaken** — Maak `.github/workflows/pipeline.yml` aan in je repository met de inhoud uit [Uitvoeren via GitHub Actions](#uitvoeren-via-github-actions).
 
 ---
 
@@ -92,7 +100,7 @@ De tool maakt gebruik van de Azure OpenAI-service via Azure AI Foundry. Volg de 
 
 > Azure AI Foundry maakt binnen de resourcegroep automatisch een hub aan als die er nog niet is.
 
-### 4. Een model deployen
+### 4. Een model deployen <span style="color:red">**Belangrijk**</span>
 
 1. Open je project in Azure AI Foundry.
 2. Ga naar **Deployments** → **+ Deploy model** → **Deploy base model**.
@@ -102,7 +110,7 @@ De tool maakt gebruik van de Azure OpenAI-service via Azure AI Foundry. Volg de 
 
 > De tool gebruikt API-versie `2024-10-21`. Zorg dat het gekozen model deze versie ondersteunt.
 
-### 5. Endpoint en API-sleutel ophalen
+### 5. Endpoint en API-sleutel ophalen <span style="color:red">**Belangrijk**</span>
 
 De benodigde waarden zijn te vinden in de Azure portal, bij de Azure OpenAI resource die je in stap 2 hebt aangemaakt:
 
@@ -119,7 +127,7 @@ De benodigde waarden zijn te vinden in de Azure portal, bij de Azure OpenAI reso
 
 ---
 
-## Configuratie instellen
+## Configuratie instellen <span style="color:red">**Belangrijk**</span>
 
 ### docsettings.json
 
@@ -156,7 +164,7 @@ Het bestand `docsettings.json` bepaalt welke bestanden de tool documenteert. Pla
 
 > De tool sluit de eigen `tools/`-map altijd automatisch uit, ongeacht de inhoud van `docsettings.json`.
 
-### GitHub Secrets aanmaken
+### GitHub Secrets aanmaken <span style="color:red">**Belangrijk**</span>
 
 Gebruik de waarden die je in [sectie 3, stap 5](#5-endpoint-en-api-sleutel-ophalen) hebt opgehaald om drie secrets aan te maken in GitHub. Ga naar je repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
 
@@ -165,6 +173,9 @@ Gebruik de waarden die je in [sectie 3, stap 5](#5-endpoint-en-api-sleutel-ophal
 | `OPENAI_APIKEY` | De API-sleutel van je Azure AI Foundry-deployment |
 | `AZURE_OPENAI_ENDPOINT` | Het endpoint, bijv. `https://<naam>.openai.azure.com/` |
 | `AZURE_OPENAI_DEPLOYMENTNAME` | De naam van de model-deployment |
+
+<span style="color:red">**Belangrijk**</span>
+> Naast de secrets moet je ook de juiste permissies verlenen aan de tool in GitHub. Navigeer naar je repository → **Settings** → **Actions** → **General**. Scroll helemaal naar beneden en zet bij **Workflow permissions** de optie **Allow GitHub Actions to create and approve pull requests** aan.
 
 ### Configuratiewaarden koppelen in de workflow
 
@@ -177,24 +188,13 @@ De namen van de omgevingsvariabelen volgen de .NET-conventie waarbij een dubbele
 | `AzureOpenAI__DeploymentName` | Ja | De naam van de model-deployment |
 | `Documentation__BasePath` | Nee | Pad waar documentatie naartoe geschreven wordt (standaard: `docs`) |
 
-In het workflow-bestand koppel je de GitHub Secrets via de `env:`-sectie aan de omgevingsvariabelen die de tool verwacht:
-
-```yaml
-env:
-  AzureOpenAI__ApiKey:         ${{ secrets.OPENAI_APIKEY }}
-  AzureOpenAI__Endpoint:       ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-  AzureOpenAI__DeploymentName: ${{ secrets.AZURE_OPENAI_DEPLOYMENTNAME }}
-```
-
-GitHub injecteert de waarden van de secrets op het moment dat de workflow draait. De tool leest ze vervolgens als gewone omgevingsvariabelen via de .NET-configuratieprovider.
-
 ---
 
 ## Uitvoeren via GitHub Actions
 
 De tool kan automatisch draaien na elke push naar een branch. De workflow zorgt ervoor dat documentatie gegenereerd wordt voor alle bestanden die in de betreffende commit zijn gewijzigd.
 
-### 1. Workflow-bestand aanmaken
+### 1. Workflow-bestand aanmaken <span style="color:red">**Belangrijk**</span>
 
 Maak het bestand `.github/workflows/pipeline.yml` aan in de root van je repository met de volgende inhoud:
 

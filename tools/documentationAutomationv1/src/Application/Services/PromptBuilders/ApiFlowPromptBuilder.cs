@@ -6,7 +6,10 @@ namespace src.Application.Services.PromptBuilders;
 
 public class ApiFlowPromptBuilder : IPromptBuilder
 {
-    public DocumentationType DocumentationType => DocumentationType.ApiFlow;
+    public DocumentationType DocumentationType
+    {
+        get { return DocumentationType.ApiFlow; }
+    }
 
     public Type OutputType => typeof(ApiFlowDocumentation);
 

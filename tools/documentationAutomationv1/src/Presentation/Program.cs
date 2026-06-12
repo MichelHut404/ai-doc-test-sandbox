@@ -20,11 +20,11 @@ var deploymentName = configuration["AzureOpenAI:DeploymentName"] ?? throw new In
 
 var services = new ServiceCollection();
 
-services.AddScoped<IPromptBuilder, ClassMethodPromptBuilder>();
-services.AddScoped<IPromptBuilder, ApiFlowPromptBuilder>();
-services.AddScoped<IPromptBuilder, RelationshipPromptBuilder>();
-services.AddScoped<IChatClient>(_ => new AzureChatClient(apiKey, endpoint, deploymentName));
-services.AddScoped<IAiDocumentationService>(sp =>
+services.AddSingleton<IPromptBuilder, ClassMethodPromptBuilder>();
+services.AddSingleton<IPromptBuilder, ApiFlowPromptBuilder>();
+services.AddSingleton<IPromptBuilder, RelationshipPromptBuilder>();
+services.AddSingleton<IChatClient>(_ => new AzureChatClient(apiKey, endpoint, deploymentName));
+services.AddSingleton<IAiDocumentationService>(sp =>
     new AiDocumentationService(
         sp.GetRequiredService<IChatClient>(),
         sp.GetServices<IPromptBuilder>()));
@@ -33,13 +33,13 @@ services.AddLogging(builder =>
     builder.AddConsole();
     builder.SetMinimumLevel(LogLevel.Information);
 });
-services.AddScoped<ICodeAnalysisService, CodeAnalysisService>();
-services.AddScoped<ISettingsService, SettingsService>();
-services.AddScoped<IProcessRunner, CmdProcessRunner>();
-services.AddScoped<IGitService, GitService>();
+services.AddSingleton<ICodeAnalysisService, CodeAnalysisService>();
+services.AddSingleton<ISettingsService, SettingsService>();
+services.AddSingleton<IProcessRunner, CmdProcessRunner>();
+services.AddSingleton<IGitService, GitService>();
 var docsBasePath = configuration["Documentation:BasePath"] ?? "docs";
-services.AddScoped<IMarkdownWriterService>(_ => new MarkdownWriterService(docsBasePath));
-services.AddScoped<AzureOrchestrator>();
+services.AddSingleton<IMarkdownWriterService>(_ => new MarkdownWriterService(docsBasePath));
+services.AddSingleton<AzureOrchestrator>();
 
 var serviceProvider = services.BuildServiceProvider();
 

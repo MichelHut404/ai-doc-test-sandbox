@@ -23,7 +23,7 @@ public class MarkdownWriterServiceIntegrationTests : IDisposable
         var doc = new ClassMethodDocumentation(
             "MyService.cs",
             "A test service.",
-            [new ClassDoc("MyService", "Handles logic.", [])]);
+            [new ClassDoc("MyService", "Handles logic.", [], [])]);
 
         await _sut.WriteAsync(doc, DocumentationType.ClassDescriptionAndMethodDescription, "test");
 

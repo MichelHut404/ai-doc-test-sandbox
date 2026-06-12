@@ -6,7 +6,10 @@ namespace src.Application.Services.PromptBuilders;
 
 public class RelationshipPromptBuilder : IPromptBuilder
 {
-    public DocumentationType DocumentationType => DocumentationType.Relationship;
+    public DocumentationType DocumentationType
+    {
+        get { return DocumentationType.Relationship; }
+    }
 
     public Type OutputType => typeof(RelationshipDocumentation);
     public string Build(string filesSections) => $"""
