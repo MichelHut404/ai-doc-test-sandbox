@@ -2,8 +2,7 @@ namespace src;
 
 public class Zoo
 {
-    //test
-
+    // comment for testing purposes
     private readonly string _name;
     private readonly List<IAnimal> _animals = new();
 
