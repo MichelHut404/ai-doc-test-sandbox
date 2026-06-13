@@ -23,7 +23,7 @@ public class MarkdownWriterService : IMarkdownWriterService
             ClassMethodDocumentation cmd => ConvertClassMethod(cmd),
             ApiFlowDocumentation afd    => ConvertApiFlow(afd),
             RelationshipDocumentation rd => ConvertRelationship(rd),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(content), content.GetType().Name, $"No markdown converter is defined for documentation type '{content.GetType().Name}'.")
         };
 
         var fileName = $"{filename}_{DateTime.Now:yyyyMMdd_HHmmss}.md";
